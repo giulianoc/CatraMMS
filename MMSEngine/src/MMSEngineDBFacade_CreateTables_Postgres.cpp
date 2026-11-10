@@ -36,7 +36,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								  "references MMS_GEOInfo (geoInfoKey)) "
 								  "partition by range (requestTimestamp)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -53,7 +53,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			string sqlStatement = "create index if not exists MMS_RequestStatistic_idx1 on MMS_RequestStatistic ("
 								  "requestTimestamp)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -73,7 +73,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			string sqlStatement = "create index if not exists MMS_RequestStatistic_idx2 on MMS_RequestStatistic ("
 								  "workspaceKey, userId, requestStatisticKey)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -89,7 +89,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			// usato da updateRequestStatisticGeoInfo
 			string sqlStatement = "create index if not exists MMS_RequestStatistic_idx3 on MMS_RequestStatistic (ipAddress, geoInfoKey)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -107,7 +107,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				"create index if not exists MMS_RequestStatistic_idx1 on MMS_RequestStatistic ("
 				"workspaceKey, requestTimestamp, title, userId, upToNextRequestInSeconds)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			LOG_INFO("SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
@@ -122,7 +122,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				"create index if not exists MMS_RequestStatistic_idx2 on MMS_RequestStatistic ("
 				"workspaceKey, requestTimestamp, userId, title, upToNextRequestInSeconds)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			LOG_INFO("SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
@@ -137,7 +137,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				"create index if not exists MMS_RequestStatistic_idx3 on MMS_RequestStatistic ("
 				"workspaceKey, requestTimestamp, upToNextRequestInSeconds)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			LOG_INFO("SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
@@ -171,7 +171,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 					constraint MMS_Workspace_PK PRIMARY KEY (workspaceKey))
 			)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -186,7 +186,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		{
 			string sqlStatement = "create unique index if not exists MMS_Workspace_idx on MMS_Workspace (directoryName)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -217,7 +217,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								  "constraint MMS_WorkspaceCost_FK foreign key (workspaceKey) "
 								  "references MMS_Workspace (workspaceKey) on delete cascade) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -242,7 +242,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								  "references MMS_Workspace (workspaceKey) on delete cascade, "
 								  "UNIQUE (workspaceKey, label)) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -266,7 +266,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								  "references MMS_Workspace (workspaceKey) on delete cascade, "
 								  "UNIQUE (workspaceKey, label)) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -290,7 +290,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								  "references MMS_Workspace (workspaceKey) on delete cascade, "
 								  "UNIQUE (workspaceKey, label)) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -314,7 +314,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								  "references MMS_Workspace (workspaceKey) on delete cascade, "
 								  "UNIQUE (workspaceKey, label)) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -363,7 +363,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								  "references MMS_Workspace (workspaceKey) on delete cascade, "
 								  "UNIQUE (workspaceKey, label)) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -378,7 +378,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		{
 			string sqlStatement = "create index if not exists MMS_Conf_Stream_idx on MMS_Conf_Stream (workspaceKey, type)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -414,7 +414,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								  "deliverySystem				text NULL,"
 								  "constraint MMS_Conf_SourceTVStream_PK PRIMARY KEY (confKey)) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -430,7 +430,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			string sqlStatement = "create unique index if not exists MMS_Conf_SourceTVStream_idx "
 								  "on MMS_Conf_SourceTVStream (type, serviceId, name, lnb, frequency, videoPid, audioPids) NULLS NOT DISTINCT";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -445,7 +445,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		{
 			string sqlStatement = "create index if not exists MMS_Conf_SourceTVStream_idx1 on MMS_Conf_SourceTVStream (name)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -476,7 +476,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								  "references MMS_Workspace (workspaceKey) on delete cascade, "
 								  "UNIQUE (workspaceKey, label)) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -493,7 +493,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								  "on MMS_Conf_RTMPChannel (outputIndex, reservedByIngestionJobKey) "
 								  "where outputIndex is not null and reservedByIngestionJobKey is not null";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -524,7 +524,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								  "references MMS_Workspace (workspaceKey) on delete cascade, "
 								  "UNIQUE (workspaceKey, label)) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -541,7 +541,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								  "on MMS_Conf_SRTChannel (outputIndex, reservedByIngestionJobKey) "
 								  "where outputIndex is not null and reservedByIngestionJobKey is not null";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -571,7 +571,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								  "UNIQUE (workspaceKey, label), "
 								  "UNIQUE (workspaceKey, deliveryCode)) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -588,7 +588,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								  "on MMS_Conf_HLSChannel (outputIndex, reservedByIngestionJobKey) "
 								  "where outputIndex is not null and reservedByIngestionJobKey is not null";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -615,7 +615,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								  "references MMS_Workspace (workspaceKey) on delete cascade, "
 								  "UNIQUE (workspaceKey, label)) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -640,7 +640,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								  "references MMS_Workspace (workspaceKey) on delete cascade, "
 								  "UNIQUE (workspaceKey, label)) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -658,7 +658,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								  "lastExecutionTime			timestamp without time zone NOT NULL,"
 								  "constraint MMS_OnceExecution_PK PRIMARY KEY (type))";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -679,7 +679,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				trans.transaction->quote(MMSEngineDBFacade::toString(onceType)), trans.transaction->quote(MMSEngineDBFacade::toString(onceType))
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -700,7 +700,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				trans.transaction->quote(MMSEngineDBFacade::toString(onceType)), trans.transaction->quote(MMSEngineDBFacade::toString(onceType))
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -723,7 +723,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								  "enabled				boolean NOT NULL,"
 								  "constraint MMS_PartitionInfo_PK PRIMARY KEY (partitionKey)) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -752,7 +752,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 					UNIQUE (eMailAddress))
 			)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -777,7 +777,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								  "constraint MMS_LoginStatistic_FK2 foreign key (geoInfoKey) "
 								  "references MMS_GEOInfo (geoInfoKey)) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -793,7 +793,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			// usato da updateLoginStatisticGeoInfo
 			string sqlStatement = "create index if not exists MMS_LoginStatistic_idx on MMS_LoginStatistic (ip, geoInfoKey)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -818,7 +818,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								  "isp							text NULL,"
 								  "constraint MMS_GEOInfo_PK PRIMARY KEY (geoInfoKey)) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -834,7 +834,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			string sqlStatement = "create unique index if not exists mms_geoinfo_idx on mms_geoinfo (continent, continentcode, country, countrycode, "
 								  "region, city, org, isp)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -860,7 +860,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								  "constraint MMS_Invoice_FK foreign key (userKey) "
 								  "references MMS_User (userKey) on delete cascade) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -889,7 +889,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								  "constraint MMS_APIKey_FK2 foreign key (workspaceKey) "
 								  "references MMS_Workspace (workspaceKey) on delete cascade) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -904,7 +904,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		{
 			string sqlStatement = "create unique index if not exists MMS_APIKey_idx on MMS_APIKey (userKey, workspaceKey)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -932,7 +932,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								  "constraint MMS_Code_FK2 foreign key (workspaceKey) "
 								  "references MMS_Workspace (workspaceKey) on delete cascade) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -953,7 +953,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								  "constraint MMS_ResetPasswordToken_FK foreign key (userKey) "
 								  "references MMS_User (userKey) on delete cascade) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -978,7 +978,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								  "constraint MMS_WorkspaceMoreInfo_FK foreign key (workspaceKey) "
 								  "references MMS_Workspace (workspaceKey) on delete cascade) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1002,7 +1002,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								  "constraint MMS_EncodingProfile_FK foreign key (workspaceKey) "
 								  "references MMS_Workspace (workspaceKey) on delete cascade) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1018,7 +1018,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			string sqlStatement = "create unique index if not exists MMS_EncodingProfile_idx "
 								  "on MMS_EncodingProfile (workspaceKey, contentType, label) NULLS NOT DISTINCT";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1035,7 +1035,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			string sqlStatement =
 				"create unique index if not exists MMS_EncodingProfile_idx on MMS_EncodingProfile (workspaceKey, contentType)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			LOG_INFO("SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
@@ -1192,7 +1192,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 									trans.transaction->quote(toString(deliveryTechnology)), trans.transaction->quote(jsonProfile)
 								);
 								chrono::system_clock::time_point startSql = chrono::system_clock::now();
-								trans.transaction->exec0(sqlStatement);
+								trans.transaction->exec(sqlStatement).no_rows();
 								long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 								SQLQUERYLOG(
 									"default", elapsed,
@@ -1241,7 +1241,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								  "references MMS_Workspace (workspaceKey) on delete cascade, "
 								  "UNIQUE (workspaceKey, contentType, label)) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1263,7 +1263,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								  "constraint MMS_EncodingProfilesSetMapping_FK2 foreign key (encodingProfileKey) "
 								  "references MMS_EncodingProfile (encodingProfileKey) on delete cascade) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1296,7 +1296,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				"constraint MMS_Encoder_PK PRIMARY KEY (encoderKey), "
 				"UNIQUE (label)) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1311,7 +1311,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		{
 			string sqlStatement = "create UNIQUE index if not exists MMS_Encoder_idx on MMS_Encoder (publicServerName)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1327,7 +1327,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			string sqlStatement = "CREATE INDEX CONCURRENTLY IF NOT EXISTS MMS_Encoder_idx2 ON MMS_Encoder ("
 				"selectedlasttime, cpuusage, (txavgbandwidthusage + rxavgbandwidthusage)) WHERE enabled = true";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1349,7 +1349,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								  "constraint MMS_EncoderWorkspaceMapping_FK2 foreign key (workspaceKey) "
 								  "references MMS_Workspace (workspaceKey) on delete cascade) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1371,7 +1371,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								  "constraint MMS_EncodersPool_FK foreign key (workspaceKey) "
 								  "references MMS_Workspace (workspaceKey) on delete cascade) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1387,7 +1387,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			string sqlStatement = "create unique index if not exists MMS_EncodersPool_idx "
 								  "on MMS_EncodersPool (workspaceKey, label) NULLS NOT DISTINCT";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1409,7 +1409,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								  "constraint MMS_EncoderEncodersPoolMapping_FK2 foreign key (encoderKey) "
 								  "references MMS_Encoder (encoderKey) on delete cascade) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1452,7 +1452,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 					UNIQUE (label))
 			)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1467,7 +1467,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		{
 			string sqlStatement = "create UNIQUE index if not exists MMS_DeliveryServer_idx on MMS_DeliveryServer (publicIP)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1484,7 +1484,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			string sqlStatement = "CREATE INDEX CONCURRENTLY IF NOT EXISTS MMS_DeliveryServer_idx2 ON MMS_DeliveryServer ("
 				"selectedlasttime, cpuusage, (txavgbandwidthusage + rxavgbandwidthusage)) WHERE enabled = true";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1500,7 +1500,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		{
 			string sqlStatement = "CREATE INDEX IF NOT EXISTS MMS_DeliveryServer_idx3 ON MMS_DeliveryServer USING GIST (earthCoord) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1524,7 +1524,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				references MMS_Workspace (workspaceKey) on delete cascade)
 			)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1542,7 +1542,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				ON MMS_DeliveryServerWorkspaceMapping (workspaceKey, deliveryServerKey)
 			)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1564,7 +1564,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								  "constraint MMS_DeliveryServersPool_FK foreign key (workspaceKey) "
 								  "references MMS_Workspace (workspaceKey) on delete cascade) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1580,7 +1580,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			string sqlStatement = "create unique index if not exists MMS_DeliveryServersPool_idx "
 								  "on MMS_DeliveryServersPool (workspaceKey, label) NULLS NOT DISTINCT";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1602,7 +1602,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								  "constraint MMS_DeliveryServerDeliveryServersPoolMapping_FK2 foreign key (deliveryServerKey) "
 								  "references MMS_DeliveryServer (deliveryServerKey) on delete cascade) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1634,7 +1634,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								  "constraint MMS_IngestionRoot_FK2 foreign key (userKey) "
 								  "references MMS_User (userKey) on delete cascade) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1649,7 +1649,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		{
 			string sqlStatement = "create index if not exists MMS_IngestionRoot_idx on MMS_IngestionRoot (workspaceKey, label)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1664,7 +1664,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		{
 			string sqlStatement = "create index if not exists MMS_IngestionRoot_idx2 on MMS_IngestionRoot (workspaceKey, ingestionDate, hidden)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1681,7 +1681,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			// utile per MMSEngineDBFacade::retentionOfIngestionData
 			string sqlStatement = "create index if not exists MMS_IngestionRoot_idx3 on MMS_IngestionRoot ((status like 'Completed%') desc)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1698,7 +1698,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			// utile per MMSEngineDBFacade::retentionOfIngestionData
 			string sqlStatement = "create index if not exists MMS_IngestionRoot_idx4 on MMS_IngestionRoot (workspaceKey, ingestionRootKey)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1750,7 +1750,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				"constraint MMS_IngestionJob_FK foreign key (ingestionRootKey) "
 				"references MMS_IngestionRoot (ingestionRootKey) on delete cascade) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1774,7 +1774,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				"END; "
 				"$fillVirtual$ LANGUAGE plpgsql";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1790,7 +1790,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				"CREATE OR REPLACE TRIGGER MMS_IngestionJob_fillVirtual BEFORE INSERT OR UPDATE OF metaDataContent ON MMS_IngestionJob "
 				"FOR EACH ROW EXECUTE PROCEDURE MMS_IngestionJob_fillVirtual()";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1806,7 +1806,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			string sqlStatement = "create index if not exists MMS_IngestionJob_idx1 on MMS_IngestionJob (scheduleStart_virtual) "
 				"WHERE processorMMS IS NULL AND toBeManaged_virtual";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1824,7 +1824,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			string sqlStatement = "create index if not exists MMS_IngestionJob_idx2 on MMS_IngestionJob "
 				"(ingestionRootKey, startProcessing desc, endProcessing desc)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1856,7 +1856,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				)
 			)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1888,7 +1888,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				)
 			)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1905,7 +1905,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			string sqlStatement = "create index if not exists MMS_IngestionJob_idx4 on MMS_IngestionJob "
 				"(ingestionRootKey, status)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1920,7 +1920,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		{
 			string sqlStatement = "create index if not exists MMS_IngestionJob_idx6 on MMS_IngestionJob (processingStartingFrom)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1937,7 +1937,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			string sqlStatement = "create index if not exists MMS_IngestionJob_idx7 on MMS_IngestionJob (processingStartingFrom, "
 								  "scheduleStart_virtual, priority) WHERE processorMMS IS NULL AND toBeManaged_virtual";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1954,7 +1954,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		{
 			string sqlStatement = "create index if not exists MMS_IngestionJob_idx8 on MMS_IngestionJob (recordingCode_virtual)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1972,7 +1972,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			string sqlStatement = "create index if not exists MMS_IngestionJob_idx9 on MMS_IngestionJob(priority, processingstartingfrom, "
 								  "(toBeManaged_virtual = true), processorMMS, scheduleStart_virtual) NULLS NOT DISTINCT";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1988,7 +1988,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		{
 			string sqlStatement = "create index if not exists MMS_IngestionJob_idx10 on MMS_IngestionJob (status)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2005,7 +2005,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		{
 			string sqlStatement = "create index if not exists MMS_IngestionJob_idx11 on MMS_IngestionJob (label)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2022,7 +2022,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			// usato da: select status from MMS_IngestionJob where ingestionRootKey = 491421
 			string sqlStatement = "create index if not exists MMS_IngestionJob_idx12 on MMS_IngestionJob (ingestionRootKey)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2039,7 +2039,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			string sqlStatement = "create index if not exists MMS_IngestionJob_idx13 on MMS_IngestionJob (ingestionType, configurationLabel_virtual, "
 								  "ingestionRootKey, startProcessing, endProcessing)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2056,7 +2056,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			string sqlStatement = "create index if not exists MMS_IngestionJob_idx14 on MMS_IngestionJob (processorMMS, status, "
 								  "sourceBinaryTransferred, processingStartingFrom, scheduleStart_virtual)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2080,7 +2080,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				"(priority, processingStartingFrom, ingestionJobKey, scheduleStart_virtual) "
 				"WHERE processorMMS IS NULL AND toBeManaged_virtual";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2106,7 +2106,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								  "constraint MMS_IngestionJobDependency_FK2 foreign key (dependOnIngestionJobKey) "
 								  "references MMS_IngestionJob (ingestionJobKey) on delete cascade) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2122,7 +2122,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			string sqlStatement =
 				"create index if not exists MMS_IngestionJobDependency_idx1 on MMS_IngestionJobDependency (ingestionJobKey, orderNumber)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2138,7 +2138,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			string sqlStatement =
 				"create index if not exists MMS_IngestionJobDependency_idx2 on MMS_IngestionJobDependency (dependOnIngestionJobKey, dependOnSuccess)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2168,7 +2168,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								  "constraint MMS_WorkflowLibrary_FK2 foreign key (creatorUserKey) "
 								  "references MMS_User (userKey) on delete cascade) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2185,7 +2185,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								  "on MMS_WorkflowLibrary (workspaceKey, label) "
 								  "NULLS NOT DISTINCT";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2295,7 +2295,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				"constraint MMS_MediaItem_FK foreign key (workspaceKey) "
 				"references MMS_Workspace (workspaceKey) on delete cascade) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2311,7 +2311,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			// usato da getMediaItemKeyDetails
 			string sqlStatement = "create index if not exists MMS_MediaItem_idx1 on MMS_MediaItem (workspaceKey, mediaItemKey)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2326,7 +2326,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		{
 			string sqlStatement = "create index if not exists MMS_MediaItem_idx5 on MMS_MediaItem (recordingCode_virtual)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2341,7 +2341,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		{
 			string sqlStatement = "create index if not exists MMS_MediaItem_idx6 on MMS_MediaItem (utcStartTimeInMilliSecs_virtual)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2356,7 +2356,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		{
 			string sqlStatement = "create index if not exists MMS_MediaItem_idx7 on MMS_MediaItem (utcEndTimeInMilliSecs_virtual)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2373,7 +2373,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			string sqlStatement = "create index if not exists MMS_MediaItem_idx8 on MMS_MediaItem (workspaceKey, "
 								  "markedAsRemoved, contentType, liveRecordingChunk_virtual, ingestionDate)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2389,7 +2389,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			string sqlStatement = "create index if not exists MMS_MediaItem_idx9 on MMS_MediaItem (willBeRemovedAt_virtual, "
 								  "processorMMSForRetention) NULLS NOT DISTINCT";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2412,7 +2412,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								  "constraint MMS_ExternalUniqueName_FK2 foreign key (mediaItemKey) "
 								  "references MMS_MediaItem (mediaItemKey) on delete cascade) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2427,7 +2427,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		{
 			string sqlStatement = "create index if not exists MMS_ExternalUniqueName_idx on MMS_ExternalUniqueName (workspaceKey, mediaItemKey)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2464,7 +2464,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								  "references MMS_EncodingProfile (encodingProfileKey), "
 								  "UNIQUE (mediaItemKey, relativePath, fileName, isAlias)) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2482,7 +2482,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								  "on MMS_PhysicalPath (mediaItemKey, encodingProfileKey) "
 								  "where encodingProfileKey is not null";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2498,7 +2498,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			string sqlStatement = "create index if not exists MMS_PhysicalPath_idx2 on MMS_PhysicalPath (mediaItemKey, physicalPathKey, "
 								  "encodingProfileKey, partitionNumber)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2520,7 +2520,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								  "constraint MMS_IngestionJobOutput_FK foreign key (ingestionJobKey) "
 								  "references MMS_IngestionJob (ingestionJobKey) on delete cascade) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2544,7 +2544,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								  "constraint MMS_CrossReference_FK2 foreign key (targetMediaItemKey) "
 								  "references MMS_MediaItem (mediaItemKey) on delete cascade) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2559,7 +2559,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		{
 			string sqlStatement = "create index if not exists MMS_CrossReference_idx on MMS_CrossReference (targetMediaItemKey, sourceMediaItemKey)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2587,7 +2587,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								  "constraint MMS_VideoTrack_FK foreign key (physicalPathKey) "
 								  "references MMS_PhysicalPath (physicalPathKey) on delete cascade) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2602,7 +2602,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		{
 			string sqlStatement = "create index if not exists MMS_VideoTrack_idx on MMS_VideoTrack (physicalPathKey)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2629,7 +2629,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								  "constraint MMS_AudioTrack_FK foreign key (physicalPathKey) "
 								  "references MMS_PhysicalPath (physicalPathKey) on delete cascade) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2644,7 +2644,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		{
 			string sqlStatement = "create index if not exists MMS_AudioTrack_idx on MMS_AudioTrack (physicalPathKey)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2667,7 +2667,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								  "constraint MMS_ImageItemProfile_FK foreign key (physicalPathKey) "
 								  "references MMS_PhysicalPath (physicalPathKey) on delete cascade) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2682,7 +2682,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		{
 			string sqlStatement = "create index if not exists MMS_ImageItemProfile_idx on MMS_ImageItemProfile (physicalPathKey)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2720,7 +2720,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								  "constraint MMS_EncodingJob_FK foreign key (ingestionJobKey) "
 								  "references MMS_IngestionJob (ingestionJobKey) on delete cascade) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2736,7 +2736,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			string sqlStatement =
 				"create index if not exists MMS_EncodingJob_idx1 on MMS_EncodingJob (status, processorMMS, failuresNumber, encodingJobStart)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2752,7 +2752,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		{
 			string sqlStatement = "create index if not exists MMS_EncodingJob_idx2 on MMS_EncodingJob (utcScheduleStart_virtual)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2769,7 +2769,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			string sqlStatement = "create index if not exists MMS_EncodingJob_idx3 on MMS_EncodingJob (typePriority, utcScheduleStart_virtual, "
 								  "encodingPriority DESC, creationDate, failuresNumber) WHERE processorMMS IS NULL AND status = 'ToBeProcessed'";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2784,7 +2784,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		{
 			string sqlStatement = "create index if not exists MMS_EncodingJob_idx4 on MMS_EncodingJob (ingestionJobKey)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2800,7 +2800,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			// usato da getEncodingJobsStatus
 			string sqlStatement = "create index if not exists MMS_EncodingJob_idx5 on MMS_EncodingJob (status, ingestionJobKey)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2830,7 +2830,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								  "constraint MMS_DeliveryAuthorization_FK foreign key (userKey) "
 								  "references MMS_User (userKey) on delete cascade) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2846,7 +2846,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			string sqlStatement =
 				"create index if not exists MMS_DeliveryAuthorization_idx1 on MMS_DeliveryAuthorization (contentType, contentKey, deliveryURI)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,

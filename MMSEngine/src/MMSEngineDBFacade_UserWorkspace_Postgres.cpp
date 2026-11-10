@@ -157,7 +157,7 @@ tuple<int64_t, int64_t, string> MMSEngineDBFacade::registerUserAndAddWorkspace(
 				trans.transaction->quote(userCountry), trans.transaction->quote(userTimezone), trans.transaction->quote(sExpirationUtcDate)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			userKey = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			userKey = trans.transaction->exec(sqlStatement).one_row()[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -305,7 +305,7 @@ tuple<int64_t, int64_t, string> MMSEngineDBFacade::registerUserAndShareWorkspace
 				trans.transaction->quote(userCountry), trans.transaction->quote(userTimezone), trans.transaction->quote(strExpirationUtcDate)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			userKey = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			userKey = trans.transaction->exec(sqlStatement).one_row()[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -588,7 +588,7 @@ string MMSEngineDBFacade::createCode(
 				trans.transaction->quote(permissions)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -669,7 +669,7 @@ pair<int64_t, string> MMSEngineDBFacade::registerActiveDirectoryUser(
 				trans.transaction->quote(userCountry), trans.transaction->quote(userTimezone), trans.transaction->quote(strExpirationUtcDate)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			userKey = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			userKey = trans.transaction->exec(sqlStatement).one_row()[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -862,7 +862,7 @@ string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
 				trans.transaction->quote(strExpirationUtcDate)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -940,7 +940,7 @@ pair<int64_t, string> MMSEngineDBFacade::addWorkspace(
 				trans.transaction->quote(workspaceTimezone)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			workspaceKey = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			workspaceKey = trans.transaction->exec(sqlStatement).one_row()[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1000,7 +1000,7 @@ pair<int64_t, string> MMSEngineDBFacade::addWorkspace(
 				workspaceKey, maxStorageInMB / 1000
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1029,7 +1029,7 @@ pair<int64_t, string> MMSEngineDBFacade::addWorkspace(
 				workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1053,7 +1053,7 @@ pair<int64_t, string> MMSEngineDBFacade::addWorkspace(
 				workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1275,7 +1275,7 @@ tuple<string, string, string> MMSEngineDBFacade::confirmRegistration(string conf
 				trans.transaction->quote(strExpirationUtcDate)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1373,7 +1373,7 @@ void MMSEngineDBFacade::addWorkspaceForAdminUsers(PostgresConnTrans &trans, int6
 					userKey, workspaceKey
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				apiKeyAlreadyPresentForAdminUser = trans.transaction->exec1(sqlStatement)[0].as<int64_t>() != 0 ? true : false;
+				apiKeyAlreadyPresentForAdminUser = trans.transaction->exec(sqlStatement).one_row()[0].as<int64_t>() != 0 ? true : false;
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 				SQLQUERYLOG(
 					"default", elapsed,
@@ -1424,7 +1424,7 @@ void MMSEngineDBFacade::addWorkspaceForAdminUsers(PostgresConnTrans &trans, int6
 				trans.transaction->quote(strExpirationUtcDate)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1522,7 +1522,7 @@ vector<tuple<int64_t, string, string>> MMSEngineDBFacade::deleteWorkspace(int64_
 
 				string sqlStatement = std::format("select count(*) from MMS_APIKey where userKey = {}", userKey);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				int count = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+				int count = trans.transaction->exec(sqlStatement).one_row()[0].as<int64_t>();
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 				SQLQUERYLOG(
 					"default", elapsed,
@@ -1556,7 +1556,7 @@ vector<tuple<int64_t, string, string>> MMSEngineDBFacade::deleteWorkspace(int64_
 			// So all should be removed automatically from DB
 			string sqlStatement = std::format("delete from MMS_Workspace where workspaceKey = {} ", workspaceKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1588,7 +1588,7 @@ vector<tuple<int64_t, string, string>> MMSEngineDBFacade::deleteWorkspace(int64_
 			// So all should be removed automatically from DB
 			string sqlStatement = std::format("delete from MMS_User where userKey in ({}) ", sUsers);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1713,7 +1713,7 @@ tuple<bool, string, string> MMSEngineDBFacade::unshareWorkspace(int64_t userKey,
 			{
 				string sqlStatement = std::format("select count(*) from MMS_APIKey where userKey = {}", userKey);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				int count = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+				int count = trans.transaction->exec(sqlStatement).one_row()[0].as<int64_t>();
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 				SQLQUERYLOG(
 					"default", elapsed,
@@ -1736,7 +1736,7 @@ tuple<bool, string, string> MMSEngineDBFacade::unshareWorkspace(int64_t userKey,
 		{
 			string sqlStatement = std::format("delete from MMS_APIKey where userKey = {} and workspaceKey = {} ", userKey, workspaceKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1755,7 +1755,7 @@ tuple<bool, string, string> MMSEngineDBFacade::unshareWorkspace(int64_t userKey,
 			// So all should be removed automatically from DB
 			string sqlStatement = std::format("delete from MMS_User where userKey = {} ", userKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1989,7 +1989,7 @@ json MMSEngineDBFacade::login(const string& eMailAddress, const string& password
 					userKey
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				trans.transaction->exec0(sqlStatement);
+				trans.transaction->exec(sqlStatement).no_rows();
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 				SQLQUERYLOG(
 					"default", elapsed,
@@ -2085,7 +2085,7 @@ json MMSEngineDBFacade::getWorkspaceList(int64_t userKey, bool admin, bool costD
 				);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			field = "numFound";
-			responseRoot[field] = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			responseRoot[field] = trans.transaction->exec(sqlStatement).one_row()[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2588,7 +2588,7 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 					setSQL, workspaceKey
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				trans.transaction->exec0(sqlStatement);
+				trans.transaction->exec(sqlStatement).no_rows();
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 				SQLQUERYLOG(
 					"default", elapsed,
@@ -2624,7 +2624,7 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 					trans.transaction->quote(newExpirationUtcDate), workspaceKey
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				trans.transaction->exec0(sqlStatement);
+				trans.transaction->exec(sqlStatement).no_rows();
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 				SQLQUERYLOG(
 					"default", elapsed,
@@ -2692,7 +2692,7 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 					setSQL, workspaceKey
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				trans.transaction->exec0(sqlStatement);
+				trans.transaction->exec(sqlStatement).no_rows();
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 				SQLQUERYLOG(
 					"default", elapsed,
@@ -2825,7 +2825,7 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 					setSQL, workspaceKey
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				trans.transaction->exec0(sqlStatement);
+				trans.transaction->exec(sqlStatement).no_rows();
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 				SQLQUERYLOG(
 					"default", elapsed,
@@ -2878,7 +2878,7 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 				trans.transaction->quote(permissions), workspaceKey, userKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -3014,7 +3014,7 @@ json MMSEngineDBFacade::setWorkspaceAsDefault(int64_t userKey, int64_t workspace
 				userKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -3033,7 +3033,7 @@ json MMSEngineDBFacade::setWorkspaceAsDefault(int64_t userKey, int64_t workspace
 				trans.transaction->quote(apiKey)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -3546,7 +3546,7 @@ json MMSEngineDBFacade::updateUser(
 				setSQL, userKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -3670,7 +3670,7 @@ string MMSEngineDBFacade::createResetPasswordToken(int64_t userKey)
 				trans.transaction->quote(resetPasswordToken), userKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -3763,7 +3763,7 @@ pair<string, string> MMSEngineDBFacade::resetPassword(string resetPasswordToken,
 				trans.transaction->quote(newPassword), userKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,

@@ -363,7 +363,7 @@ int MMSEngineDBFacade::getNotFinishedIngestionDependenciesNumberByIngestionJobKe
 				ingestionJobKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			dependenciesNumber = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			dependenciesNumber = trans.transaction->exec(sqlStatement).one_row()[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -460,7 +460,7 @@ json MMSEngineDBFacade::updateMediaItem(
 				setSQL, mediaItemKey, workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -554,7 +554,7 @@ json MMSEngineDBFacade::updatePhysicalPath(
 				newRetentionInMinutes == -1 ? "null" : to_string(newRetentionInMinutes), physicalPathKey, mediaItemKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -863,7 +863,7 @@ json MMSEngineDBFacade::getMediaItemsList(MediaItemsListParams& mediaItemsListPa
 		{
 			string sqlStatement = std::format("select count(*) from MMS_MediaItem mi {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			numFound = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			numFound = trans.transaction->exec(sqlStatement).one_row()[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -4028,7 +4028,7 @@ pair<int64_t, int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 				retentionInMinutes, tags
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			mediaItemKey = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			mediaItemKey = trans.transaction->exec(sqlStatement).one_row()[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -4374,7 +4374,7 @@ void MMSEngineDBFacade::manageExternalUniqueName(
 					workspaceKey, mediaItemKey
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				trans.transaction->exec0(sqlStatement);
+				trans.transaction->exec(sqlStatement).no_rows();
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 				SQLQUERYLOG(
 					"default", elapsed,
@@ -4446,7 +4446,7 @@ void MMSEngineDBFacade::manageExternalUniqueName(
 							mediaItemKey, chrono::system_clock::now().time_since_epoch().count(), workspaceKey, trans.transaction->quote(uniqueName)
 						);
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
-						trans.transaction->exec0(sqlStatement);
+						trans.transaction->exec(sqlStatement).no_rows();
 						long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 						SQLQUERYLOG(
 							"default", elapsed,
@@ -4466,7 +4466,7 @@ void MMSEngineDBFacade::manageExternalUniqueName(
 							workspaceKey, mediaItemKeyOfCurrentUniqueName
 						);
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
-						trans.transaction->exec0(sqlStatement);
+						trans.transaction->exec(sqlStatement).no_rows();
 						long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 						SQLQUERYLOG(
 							"default", elapsed,
@@ -4487,7 +4487,7 @@ void MMSEngineDBFacade::manageExternalUniqueName(
 					workspaceKey, mediaItemKey, trans.transaction->quote(uniqueName)
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				trans.transaction->exec0(sqlStatement);
+				trans.transaction->exec(sqlStatement).no_rows();
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 				SQLQUERYLOG(
 					"default", elapsed,
@@ -4536,7 +4536,7 @@ void MMSEngineDBFacade::manageExternalUniqueName(
 								trans.transaction->quote(uniqueName)
 							);
 							chrono::system_clock::time_point startSql = chrono::system_clock::now();
-							trans.transaction->exec0(sqlStatement);
+							trans.transaction->exec(sqlStatement).no_rows();
 							long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 							SQLQUERYLOG(
 								"default", elapsed,
@@ -4556,7 +4556,7 @@ void MMSEngineDBFacade::manageExternalUniqueName(
 								workspaceKey, mediaItemKeyOfCurrentUniqueName
 							);
 							chrono::system_clock::time_point startSql = chrono::system_clock::now();
-							trans.transaction->exec0(sqlStatement);
+							trans.transaction->exec(sqlStatement).no_rows();
 							long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 							SQLQUERYLOG(
 								"default", elapsed,
@@ -4579,7 +4579,7 @@ void MMSEngineDBFacade::manageExternalUniqueName(
 					trans.transaction->quote(uniqueName), workspaceKey, mediaItemKey
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				trans.transaction->exec0(sqlStatement);
+				trans.transaction->exec(sqlStatement).no_rows();
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 				SQLQUERYLOG(
 					"default", elapsed,
@@ -4784,7 +4784,7 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 				physicalItemRetentionPeriodInMinutes == -1 ? "null" : to_string(physicalItemRetentionPeriodInMinutes)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			physicalPathKey = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			physicalPathKey = trans.transaction->exec(sqlStatement).one_row()[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -4825,7 +4825,7 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 					videoProfile == "" ? "null" : trans.transaction->quote(videoProfile)
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				trans.transaction->exec0(sqlStatement);
+				trans.transaction->exec(sqlStatement).no_rows();
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 				SQLQUERYLOG(
 					"default", elapsed,
@@ -4861,7 +4861,7 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 					language == "" ? "null" : trans.transaction->quote(language)
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				trans.transaction->exec0(sqlStatement);
+				trans.transaction->exec(sqlStatement).no_rows();
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 				SQLQUERYLOG(
 					"default", elapsed,
@@ -4882,7 +4882,7 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 				physicalPathKey, imageWidth, imageHeight, trans.transaction->quote(imageFormat), imageQuality
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -4978,7 +4978,7 @@ void MMSEngineDBFacade::manageCrossReferences(
 				mediaItemKey, mediaItemKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -5195,7 +5195,7 @@ void MMSEngineDBFacade::addCrossReference(
 					sourceMediaItemKey, trans.transaction->quote(toString(crossReferenceType)), targetMediaItemKey
 				);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -5254,7 +5254,7 @@ void MMSEngineDBFacade::removePhysicalPath(int64_t physicalPathKey)
 				physicalPathKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -5470,7 +5470,7 @@ json MMSEngineDBFacade::getTagsList(
 				sqlStatement += std::format("where lower(tagName) like {} ", trans.transaction->quote("%" + tagNameFilterLowerCase + "%"));
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			field = "numFound";
-			responseRoot[field] = trans.transaction->exec1(sqlStatement)[0].as<int>();
+			responseRoot[field] = trans.transaction->exec(sqlStatement).one_row()[0].as<int>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,

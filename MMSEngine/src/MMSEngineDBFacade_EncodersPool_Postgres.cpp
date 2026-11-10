@@ -34,7 +34,7 @@ int64_t MMSEngineDBFacade::addEncoder(
 				trans.transaction->quote(internalServerName), port
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			encoderKey = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			encoderKey = trans.transaction->exec(sqlStatement).one_row()[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -161,7 +161,7 @@ void MMSEngineDBFacade::modifyEncoder(
 				setSQL, encoderKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -229,7 +229,7 @@ void MMSEngineDBFacade::updateEncoderAvgBandwidthUsage(int64_t encoderKey, uint6
 			rxAvgBandwidthUsage, txAvgBandwidthUsage, rxPeakBandwidthUsage, txPeakBandwidthUsage, encoderKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			result res = trans.transaction->exec0(sqlStatement);
+			result res = trans.transaction->exec(sqlStatement).no_rows();
 			const int rowsUpdated = res.affected_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
@@ -293,7 +293,7 @@ void MMSEngineDBFacade::updateEncoderCPUUsage(
 				cpuUsage, encoderKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			result res = trans.transaction->exec0(sqlStatement);
+			result res = trans.transaction->exec(sqlStatement).no_rows();
 			const int rowsUpdated = res.affected_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
@@ -624,7 +624,7 @@ void MMSEngineDBFacade::addAssociationWorkspaceEncoder(int64_t workspaceKey, int
 				workspaceKey, encoderKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -672,7 +672,7 @@ bool MMSEngineDBFacade::encoderWorkspaceMapping_isPresent(int64_t workspaceKey, 
 				workspaceKey, encoderKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			isPresent = trans.transaction->exec1(sqlStatement)[0].as<int64_t>() == 1;
+			isPresent = trans.transaction->exec(sqlStatement).one_row()[0].as<int64_t>() == 1;
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -797,7 +797,7 @@ void MMSEngineDBFacade::removeAssociationWorkspaceEncoder(int64_t workspaceKey, 
 				workspaceKey, encoderKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1051,7 +1051,7 @@ json MMSEngineDBFacade::getEncoderList(
 				);
 			}
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			responseRoot["numFound"] = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			responseRoot["numFound"] = trans.transaction->exec(sqlStatement).one_row()[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1533,7 +1533,7 @@ json MMSEngineDBFacade::getEncodersPoolList(
 			string sqlStatement = std::format("select count(*) from MMS_EncodersPool {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			field = "numFound";
-			responseRoot[field] = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			responseRoot[field] = trans.transaction->exec(sqlStatement).one_row()[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1695,7 +1695,7 @@ int64_t MMSEngineDBFacade::addEncodersPool(int64_t workspaceKey, const string& l
 				workspaceKey, encoderKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			auto count = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			auto count = trans.transaction->exec(sqlStatement).one_row()[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1727,7 +1727,7 @@ int64_t MMSEngineDBFacade::addEncodersPool(int64_t workspaceKey, const string& l
 				workspaceKey, trans.transaction->quote(label)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			encodersPoolKey = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			encodersPoolKey = trans.transaction->exec(sqlStatement).one_row()[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1748,7 +1748,7 @@ int64_t MMSEngineDBFacade::addEncodersPool(int64_t workspaceKey, const string& l
 				encodersPoolKey, encoderKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1810,7 +1810,7 @@ int64_t MMSEngineDBFacade::modifyEncodersPool(int64_t encodersPoolKey, int64_t w
 				workspaceKey, encoderKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			auto count = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			auto count = trans.transaction->exec(sqlStatement).one_row()[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1928,7 +1928,7 @@ int64_t MMSEngineDBFacade::modifyEncodersPool(int64_t encodersPoolKey, int64_t w
 							encodersPoolKey, newEncoderKey
 						);
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
-						trans.transaction->exec0(sqlStatement);
+						trans.transaction->exec(sqlStatement).no_rows();
 						long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 						SQLQUERYLOG(
 							"default", elapsed,
@@ -2162,7 +2162,7 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 					encodersPoolKey
 				);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			encodersNumber = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			encodersNumber = trans.transaction->exec(sqlStatement).one_row()[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2322,7 +2322,7 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 				newLastEncoderIndexUsed, encodersPoolKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2358,7 +2358,7 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 				encoderKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2904,7 +2904,7 @@ int MMSEngineDBFacade::getEncodersNumberByEncodersPool(int64_t workspaceKey, str
 					encodersPoolKey
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				encodersNumber = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+				encodersNumber = trans.transaction->exec(sqlStatement).one_row()[0].as<int64_t>();
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 				SQLQUERYLOG(
 					"default", elapsed,
@@ -2924,7 +2924,7 @@ int MMSEngineDBFacade::getEncodersNumberByEncodersPool(int64_t workspaceKey, str
 				workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			encodersNumber = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			encodersNumber = trans.transaction->exec(sqlStatement).one_row()[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,

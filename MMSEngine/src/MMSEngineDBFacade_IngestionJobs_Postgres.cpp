@@ -678,7 +678,7 @@ int64_t MMSEngineDBFacade::addIngestionJob(
 					trans.transaction->quote(toString(MMSEngineDBFacade::IngestionStatus::Start_TaskQueued))
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				ingestionJobKey = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+				ingestionJobKey = trans.transaction->exec(sqlStatement).one_row()[0].as<int64_t>();
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 				SQLQUERYLOG(
 					"default", elapsed,
@@ -820,7 +820,7 @@ void MMSEngineDBFacade::addIngestionJobDependency(
 				referenceOutputDependency ? 1 : 0
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -867,7 +867,7 @@ void MMSEngineDBFacade::changeIngestionJobDependency(int64_t previousDependOnIng
 				newDependOnIngestionJobKey, previousDependOnIngestionJobKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -965,7 +965,7 @@ void MMSEngineDBFacade::updateIngestionJobMetadataContent(PostgresConnTrans &tra
 				trans.transaction->quote(metadataContent), ingestionJobKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1189,7 +1189,7 @@ void MMSEngineDBFacade::updateIngestionJob(
 						ingestionJobKey
 					);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				trans.transaction->exec0(sqlStatement);
+				trans.transaction->exec(sqlStatement).no_rows();
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 				SQLQUERYLOG(
 					"default", elapsed,
@@ -1243,7 +1243,7 @@ void MMSEngineDBFacade::updateIngestionJob(
 						ingestionJobKey
 					);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				trans.transaction->exec0(sqlStatement);
+				trans.transaction->exec(sqlStatement).no_rows();
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 				SQLQUERYLOG(
 					"default", elapsed,
@@ -1347,7 +1347,7 @@ void MMSEngineDBFacade::addIngestionJobErrorMessages(int64_t ingestionJobKey, js
 				newErrorMessages, maxErrorMessagesNumber, ingestionJobKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1427,7 +1427,7 @@ void MMSEngineDBFacade::updateIngestionJobErrorMessages(int64_t ingestionJobKey,
 				trans.transaction->quote(errorMessagesForSQL), ingestionJobKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1639,7 +1639,7 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate(
 						: std::format("= {}", hierarchicalIngestionJobKeysDependencies)
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				trans.transaction->exec0(sqlStatement);
+				trans.transaction->exec(sqlStatement).no_rows();
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 				SQLQUERYLOG(
 					"manageIngestionJobStatusUpdate", elapsed,
@@ -1913,7 +1913,7 @@ bool MMSEngineDBFacade::updateIngestionJobSourceDownloadingInProgress(int64_t in
 				downloadingPercentage, ingestionJobKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2025,7 +2025,7 @@ bool MMSEngineDBFacade::updateIngestionJobSourceUploadingInProgress(int64_t inge
 				uploadingPercentage, ingestionJobKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2144,7 +2144,7 @@ void MMSEngineDBFacade::updateIngestionJobSourceBinaryTransferred(int64_t ingest
 					sourceBinaryTransferred, ingestionJobKey
 				);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -3194,7 +3194,7 @@ void MMSEngineDBFacade::addIngestionJobOutput(
 				ingestionJobKey, mediaItemKey, physicalPathKey, newPosition
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -3237,7 +3237,7 @@ void MMSEngineDBFacade::addIngestionJobOutput(
 				sourceIngestionJobKey, mediaItemKey, physicalPathKey, newPosition
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -3298,7 +3298,7 @@ long MMSEngineDBFacade::getIngestionJobOutputsCount(int64_t ingestionJobKey, boo
 		{
 			string sqlStatement = std::format("select count(*) from MMS_IngestionJobOutput where ingestionJobKey = {}", ingestionJobKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			ingestionJobOutputsCount = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			ingestionJobOutputsCount = trans.transaction->exec(sqlStatement).one_row()[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -3451,7 +3451,7 @@ json MMSEngineDBFacade::getIngestionJobsStatus(
 		{
 			string sqlStatement = std::format("select count(*) {} {}", sqlJoin, sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			responseRoot["numFound"] = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			responseRoot["numFound"] = trans.transaction->exec(sqlStatement).one_row()[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -4492,7 +4492,7 @@ void MMSEngineDBFacade::updateIngestionJob_LiveRecorder(
 				setSQL, ingestionJobKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -4528,7 +4528,7 @@ void MMSEngineDBFacade::updateIngestionJob_LiveRecorder(
 					ingestionJobKey
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				trans.transaction->exec0(sqlStatement);
+				trans.transaction->exec(sqlStatement).no_rows();
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 				SQLQUERYLOG(
 					"default", elapsed,

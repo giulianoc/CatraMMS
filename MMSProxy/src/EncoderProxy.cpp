@@ -973,7 +973,8 @@ void EncoderProxy::operator()()
 	);
 }
 
-tuple<bool, bool, FFMpegWrapper::KillType, bool, json, bool, bool, optional<double>, int, json, long> EncoderProxy::getEncodingStatus()
+tuple<bool, bool, FFMpegWrapper::KillType, bool, json, bool, bool, optional<double>, int, json, long>
+EncoderProxy::getEncodingStatus()
 {
 	bool encodingFinished;
 	FFMpegWrapper::KillType killTypeReceived;
@@ -1901,8 +1902,8 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 						realTimeInfoRoot, numberOfRestartBecauseOfFailure) = getEncodingStatus();
 					LOG_INFO(
 						"getEncodingStatus"
-						", _ingestionJobKey: {}"
-						", _encodingJobKey: {}"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
 						", currentAttemptsNumberInCaseOfErrors: {}"
 						", maxAttemptsNumberInCaseOfErrors: {}"
 						", encodingFinished: {}"

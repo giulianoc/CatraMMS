@@ -481,7 +481,7 @@ void MMSEngineDBFacade::retentionOfStatisticData()
 				trans.transaction->quote(partitionName)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int count = trans.transaction->exec1(sqlStatement)[0].as<int>();
+			int count = trans.transaction->exec(sqlStatement).one_row()[0].as<int>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -499,7 +499,7 @@ void MMSEngineDBFacade::retentionOfStatisticData()
 					partitionName, trans.transaction->quote(partition_start), trans.transaction->quote(partition_end)
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				trans.transaction->exec0(sqlStatement);
+				trans.transaction->exec(sqlStatement).no_rows();
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 				SQLQUERYLOG(
 					"default", elapsed,
@@ -545,7 +545,7 @@ void MMSEngineDBFacade::retentionOfStatisticData()
 				trans.transaction->quote(partitionName)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int count = trans.transaction->exec1(sqlStatement)[0].as<int>();
+			int count = trans.transaction->exec(sqlStatement).one_row()[0].as<int>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -559,7 +559,7 @@ void MMSEngineDBFacade::retentionOfStatisticData()
 			{
 				string sqlStatement = std::format("DROP TABLE {}", partitionName);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				trans.transaction->exec0(sqlStatement);
+				trans.transaction->exec(sqlStatement).no_rows();
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 				SQLQUERYLOG(
 					"default", elapsed,

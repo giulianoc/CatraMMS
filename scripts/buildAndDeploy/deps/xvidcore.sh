@@ -17,7 +17,9 @@ wget -q https://downloads.xvid.com/downloads/$name-$version.tar.gz
 bsdtar xzf $name-$version.tar.gz
 cd $name/build/generic
 
-./configure --prefix="$DEPLOY_DIR/ffmpeg"
+# -std=gnu17: dal gcc 15 (Ubuntu 26.04) lo standard di default è il C23, in cui bool è una keyword e
+# 'typedef int bool' di encoder.h non compila. Viene aggiunto a CC per non sostituire i CFLAGS di configure
+./configure --prefix="$DEPLOY_DIR/ffmpeg" CC="gcc -std=gnu17"
 make -j "$(nproc)"
 make install
 

@@ -47,7 +47,7 @@ json MMSEngineDBFacade::addRequestStatistic(
 				trans.transaction->quote(title)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			requestStatisticKey = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			requestStatisticKey = trans.transaction->exec(sqlStatement).one_row()[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -196,7 +196,7 @@ int64_t MMSEngineDBFacade::saveLoginStatistics(int userKey, string ip)
 				userKey, ip == "" ? "null" : trans.transaction->quote(ip)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			loginStatisticKey = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			loginStatisticKey = trans.transaction->exec(sqlStatement).one_row()[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -356,7 +356,7 @@ void MMSEngineDBFacade::updateRequestStatisticGEOInfo()
 								isp == "" ? "null" : trans.transaction->quote(isp)
 							);
 							chrono::system_clock::time_point startSql = chrono::system_clock::now();
-							geoInfoKey = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+							geoInfoKey = trans.transaction->exec(sqlStatement).one_row()[0].as<int64_t>();
 							long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 							SQLQUERYLOG(
 								"default", elapsed,
@@ -379,7 +379,7 @@ void MMSEngineDBFacade::updateRequestStatisticGEOInfo()
 							geoInfoKey, trans.transaction->quote(ip)
 						);
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
-						trans.transaction->exec0(sqlStatement);
+						trans.transaction->exec(sqlStatement).no_rows();
 						long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 						SQLQUERYLOG(
 							"default", elapsed,
@@ -561,7 +561,7 @@ void MMSEngineDBFacade::updateLoginStatisticGEOInfo()
 								isp == "" ? "null" : trans.transaction->quote(isp)
 							);
 							chrono::system_clock::time_point startSql = chrono::system_clock::now();
-							geoInfoKey = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+							geoInfoKey = trans.transaction->exec(sqlStatement).one_row()[0].as<int64_t>();
 							long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 							SQLQUERYLOG(
 								"default", elapsed,
@@ -584,7 +584,7 @@ void MMSEngineDBFacade::updateLoginStatisticGEOInfo()
 							geoInfoKey, trans.transaction->quote(ip)
 						);
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
-						trans.transaction->exec0(sqlStatement);
+						trans.transaction->exec(sqlStatement).no_rows();
 						long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 						SQLQUERYLOG(
 							"default", elapsed,
@@ -922,7 +922,7 @@ json MMSEngineDBFacade::getRequestStatisticList(
 		{
 			string sqlStatement = std::format("select count(*) from MMS_RequestStatistic {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int64_t count = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			int64_t count = trans.transaction->exec(sqlStatement).one_row()[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2324,7 +2324,7 @@ json MMSEngineDBFacade::getLoginStatisticList(string startStatisticDate, string 
 		{
 			string sqlStatement = std::format("select count(*) from MMS_LoginStatistic s, MMS_User u {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int64_t count = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			int64_t count = trans.transaction->exec(sqlStatement).one_row()[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,

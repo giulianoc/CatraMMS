@@ -356,7 +356,7 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 				trans.transaction->quote(toString(IngestionStatus::SourceCopingInProgress))
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -387,7 +387,7 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 				trans.transaction->quote(processorMMS), trans.transaction->quote(toString(IngestionStatus::Start_TaskQueued))
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -487,7 +487,7 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 				trans.quote(processorMMS)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.exec0(sqlStatement);
+			trans.exec(sqlStatement).no_rows();
 			LOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -515,7 +515,7 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 				trans.quote(toString(EncodingStatus::ToBeProcessed)), trans.quote(processorMMS), trans.quote(toString(EncodingStatus::Processing))
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.exec0(sqlStatement);
+			trans.exec(sqlStatement).no_rows();
 			LOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -538,7 +538,7 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 				trans.transaction->quote(processorMMS)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1200,7 +1200,7 @@ int64_t MMSEngineDBFacade::createDeliveryAuthorization(
 				contentKey, trans.transaction->quote(deliveryURI), ttlInSeconds, maxRetries
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			deliveryAuthorizationKey = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			deliveryAuthorizationKey = trans.transaction->exec(sqlStatement).one_row()[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1464,7 +1464,7 @@ bool MMSEngineDBFacade::checkDeliveryAuthorization(int64_t deliveryAuthorization
 				deliveryAuthorizationKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,

@@ -31,7 +31,7 @@ int64_t MMSEngineDBFacade::addInvoice(int64_t userKey, string description, int a
 			userKey, trans.transaction->quote(description), amount, trans.transaction->quote(expirationDate)
 		);
 		chrono::system_clock::time_point startSql = chrono::system_clock::now();
-		int64_t invoiceKey = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+		int64_t invoiceKey = trans.transaction->exec(sqlStatement).one_row()[0].as<int64_t>();
 		long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 		SQLQUERYLOG(
 			"default", elapsed,
@@ -135,7 +135,7 @@ json MMSEngineDBFacade::getInvoicesList(int64_t userKey, bool admin, int start, 
 		{
 			string sqlStatement = std::format("select count(*) from MMS_Invoice {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int64_t count = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			int64_t count = trans.transaction->exec(sqlStatement).one_row()[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,

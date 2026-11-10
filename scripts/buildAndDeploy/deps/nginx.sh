@@ -49,14 +49,19 @@ cd $name-$version
 # nginx-vod-module viene compilato senza ffmpeg (non vengono passati include e librerie di $DEPLOY_DIR/ffmpeg):
 # la 1.33 non compila con FFmpeg 9 (usa avcodec_close, AVCodec::sample_fmts, ... rimossi) e le funzionalità
 # che richiedono ffmpeg (thumbnails, volume map, filtri audio) non sono usate da CatraMMS.
-# Il packaging VOD (HLS/DASH/MSS) non dipende da ffmpeg
+# Il packaging VOD (HLS/DASH/MSS) non dipende da ffmpeg.
+# nginx compila con -Werror e la 1.33 di nginx-vod-module dà errore con gcc >= 15 e libxml2 >= 2.14 (Ubuntu 26.04):
+#	- -std=gnu17: nel C23 (default del gcc 15) 'static void ngx_http_vod_exit_process();' è un prototipo senza
+#		parametri, incompatibile con i puntatori a funzione di ngx_module_t (exit_process/exit_master)
+#	- -Wno-error=deprecated-declarations: dfxp_format.c usa xmlParserCtxt::recovery, deprecato dalla libxml2 2.14
+ccOpt="-O3 -std=gnu17 -Wno-error=deprecated-declarations"
 ./configure --prefix=/opt/mms/$name \
 	--with-pcre=../pcre-$pcreVersion --with-zlib=../zlib-$zlibVersion --with-openssl=../openssl-$opensslVersion \
 	--with-http_ssl_module --with-http_v2_module \
 	--with-http_auth_request_module --with-http_stub_status_module --with-http_realip_module \
 	--add-module=../nginx-upload-progress-module --add-module=../nginx-rtmp-module \
 	--add-module=../nginx-vod-module --add-module=../ngx_http_geoip2_module \
-	--with-file-aio --with-threads --with-cc-opt="-O3"
+	--with-file-aio --with-threads --with-cc-opt="$ccOpt"
 
 make -j "$(nproc)"
 make install

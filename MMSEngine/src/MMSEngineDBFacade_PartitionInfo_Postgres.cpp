@@ -61,7 +61,7 @@ void MMSEngineDBFacade::addUpdatePartitionInfo(
 				);
 				LOG_INFO("mon currentFreeSizeInBytes. addUpdatePartitionInfo, currentFreeSizeInBytes: {}", currentFreeSizeInBytes);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				trans.transaction->exec0(sqlStatement);
+				trans.transaction->exec(sqlStatement).no_rows();
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 				SQLQUERYLOG(
 					"default", elapsed,
@@ -83,7 +83,7 @@ void MMSEngineDBFacade::addUpdatePartitionInfo(
 				);
 				LOG_INFO("mon currentFreeSizeInBytes. addUpdatePartitionInfo, currentFreeSizeInBytes: {}", currentFreeSizeInBytes);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				trans.transaction->exec0(sqlStatement);
+				trans.transaction->exec(sqlStatement).no_rows();
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 				SQLQUERYLOG(
 					"default", elapsed,
@@ -201,7 +201,7 @@ std::pair<int64_t, uint64_t> MMSEngineDBFacade::getPartitionToBeUsedAndUpdateFre
 				newCurrentFreeSizeInBytes
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -298,7 +298,7 @@ uint64_t MMSEngineDBFacade::updatePartitionBecauseOfDeletion(int64_t partitionKe
 			);
 			LOG_INFO("mon currentFreeSizeInBytes. updatePartitionBecauseOfDeletion, newCurrentFreeSizeInBytes: {}", newCurrentFreeSizeInBytes);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,

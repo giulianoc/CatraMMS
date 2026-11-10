@@ -35,7 +35,7 @@ int64_t MMSEngineDBFacade::addDeliveryServer(
 				trans.transaction->quote(hostname), latitude, longitude, maxTXBandwidthInGbps
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			deliveryServerKey = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			deliveryServerKey = trans.transaction->exec(sqlStatement).one_row()[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -205,7 +205,7 @@ void MMSEngineDBFacade::modifyDeliveryServer(
 				setSQL, deliveryServerKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -271,7 +271,7 @@ void MMSEngineDBFacade::enableDeliveryServer(
 				enabled, deliveryServerKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			result res = trans.transaction->exec0(sqlStatement);
+			result res = trans.transaction->exec(sqlStatement).no_rows();
 			const int rowsUpdated = res.affected_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
@@ -340,7 +340,7 @@ void MMSEngineDBFacade::updateDeliveryServerAvgBandwidthUsage(
 				rxAvgBandwidthUsage, txAvgBandwidthUsage, rxPeakBandwidthUsage, txPeakBandwidthUsage, deliveryServerKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			result res = trans.transaction->exec0(sqlStatement);
+			result res = trans.transaction->exec(sqlStatement).no_rows();
 			const int rowsUpdated = res.affected_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
@@ -404,7 +404,7 @@ void MMSEngineDBFacade::updateDeliveryServerCPUUsage(
 				cpuUsage, deliveryServerKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			result res = trans.transaction->exec0(sqlStatement);
+			result res = trans.transaction->exec(sqlStatement).no_rows();
 			const int rowsUpdated = res.affected_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
@@ -615,7 +615,7 @@ json MMSEngineDBFacade::getDeliveryServerList(
 				);
 			}
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			responseRoot["numFound"] = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			responseRoot["numFound"] = trans.transaction->exec(sqlStatement).one_row()[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1275,7 +1275,7 @@ void MMSEngineDBFacade::addAssociationWorkspaceDeliveryServer(int64_t workspaceK
 				workspaceKey, deliveryServerKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1325,7 +1325,7 @@ void MMSEngineDBFacade::removeAssociationWorkspaceDeliveryServer(int64_t workspa
 				workspaceKey, deliveryServerKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,

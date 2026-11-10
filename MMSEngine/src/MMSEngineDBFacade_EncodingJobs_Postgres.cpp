@@ -163,7 +163,7 @@ void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 								trans.transaction->quote(toString(EncodingStatus::End_Failed)), encodingItem->_encodingJobKey
 							);
 							chrono::system_clock::time_point startSql = chrono::system_clock::now();
-							trans.transaction->exec0(sqlStatement);
+							trans.transaction->exec(sqlStatement).no_rows();
 							long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 							SQLQUERYLOG(
 								"default", elapsed,
@@ -226,7 +226,7 @@ void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 								trans.transaction->quote(toString(EncodingStatus::End_CanceledByMMS)), encodingItem->_encodingJobKey
 							);
 							chrono::system_clock::time_point startSql = chrono::system_clock::now();
-							trans.transaction->exec0(sqlStatement);
+							trans.transaction->exec(sqlStatement).no_rows();
 							long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 							SQLQUERYLOG(
 								"default", elapsed,
@@ -271,7 +271,7 @@ void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 							trans.transaction->quote(toString(EncodingStatus::End_Failed)), encodingItem->_encodingJobKey
 						);
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
-						trans.transaction->exec0(sqlStatement);
+						trans.transaction->exec(sqlStatement).no_rows();
 						long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 						SQLQUERYLOG(
 							"default", elapsed,
@@ -336,7 +336,7 @@ void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 									trans.transaction->quote(toString(EncodingStatus::End_Failed)), encodingItem->_encodingJobKey
 								);
 								chrono::system_clock::time_point startSql = chrono::system_clock::now();
-								trans.transaction->exec0(sqlStatement);
+								trans.transaction->exec(sqlStatement).no_rows();
 								long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 								SQLQUERYLOG(
 									"default", elapsed,
@@ -376,7 +376,7 @@ void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 								trans.transaction->quote(toString(EncodingStatus::End_Failed)), encodingItem->_encodingJobKey
 							);
 							chrono::system_clock::time_point startSql = chrono::system_clock::now();
-							trans.transaction->exec0(sqlStatement);
+							trans.transaction->exec(sqlStatement).no_rows();
 							long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 							SQLQUERYLOG(
 								"default", elapsed,
@@ -1269,7 +1269,7 @@ nontransaction trans{*(conn->_sqlConnection)};
 				utcRecordingPeriodStart, utcRecordingPeriodStart, utcRecordingPeriodEnd, utcRecordingPeriodEnd, ingestionJobKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1749,7 +1749,7 @@ nontransaction trans{*(conn->_sqlConnection)};
 				trans.transaction->quote(toString(encodingStatus)), ingestionJobKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1831,7 +1831,7 @@ void MMSEngineDBFacade::updateEncodingJobProgressAndRealTimeInfo(int64_t encodin
 					trans.transaction->quote(JSONUtils::toString(realTimeInfoRoot)), encodingJobKey
 				);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1906,7 +1906,7 @@ void MMSEngineDBFacade::updateEncodingPid(
 				numberOfRestartBecauseOfFailure, encodingJobKey
 			);
 			const chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2027,7 +2027,7 @@ nontransaction trans{*(conn->_sqlConnection)};
 				failuresNumber, encodingJobKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2111,7 +2111,7 @@ nontransaction trans{*(conn->_sqlConnection)};
 				isKilled, encodingJobKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2193,7 +2193,7 @@ nontransaction trans{*(conn->_sqlConnection)};
 				encoderKey, trans.transaction->quote(stagingEncodedAssetPathName), encodingJobKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2266,7 +2266,7 @@ nontransaction trans{*(conn->_sqlConnection)};
 				trans.transaction->quote(parameters), encodingJobKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2340,7 +2340,7 @@ void MMSEngineDBFacade::updateOutputURL(int64_t ingestionJobKey, int64_t encodin
 				trans.transaction->quote(path_outputUrl), trans.transaction->quote("\"" + outputURL + "\""), encodingJobKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2434,7 +2434,7 @@ nontransaction trans{*(conn->_sqlConnection)};
 				trans.transaction->quote(path_deliveryCode), trans.transaction->quote(to_string(deliveryCode)), ingestionJobKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2497,7 +2497,7 @@ nontransaction trans{*(conn->_sqlConnection)};
 				trans.transaction->quote(path_otherOutputOptions), trans.transaction->quote("\"" + otherOutputOptions + "\""), encodingJobKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -3138,7 +3138,7 @@ json MMSEngineDBFacade::getEncodingJobsStatus(
 		{
 			string sqlStatement = std::format("select count(*) {} {}", sqlJoin, sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			responseRoot["numFound"] = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			responseRoot["numFound"] = trans.transaction->exec(sqlStatement).one_row()[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -3495,7 +3495,7 @@ void MMSEngineDBFacade::addEncodingJob(
 				trans.transaction->quote(parameters), savedEncodingPriority, trans.transaction->quote(toString(EncodingStatus::ToBeProcessed))
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -3649,7 +3649,7 @@ void MMSEngineDBFacade::addEncoding_OverlayImageOnVideoJob(
 				trans.transaction->quote(parameters), savedEncodingPriority, trans.transaction->quote(toString(EncodingStatus::ToBeProcessed))
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -3785,7 +3785,7 @@ void MMSEngineDBFacade::addEncoding_OverlayTextOnVideoJob(
 				trans.transaction->quote(parameters), savedEncodingPriority, trans.transaction->quote(toString(EncodingStatus::ToBeProcessed))
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -3946,7 +3946,7 @@ void MMSEngineDBFacade::addEncoding_GenerateFramesJob(
 				trans.transaction->quote(parameters), savedEncodingPriority, trans.transaction->quote(toString(EncodingStatus::ToBeProcessed))
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -4078,7 +4078,7 @@ void MMSEngineDBFacade::addEncoding_SlideShowJob(
 				trans.transaction->quote(parameters), savedEncodingPriority, trans.transaction->quote(toString(EncodingStatus::ToBeProcessed))
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -4187,7 +4187,7 @@ work trans{*(conn->_sqlConnection)};
 				trans.transaction->quote(parameters), savedEncodingPriority, trans.transaction->quote(toString(EncodingStatus::ToBeProcessed))
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -4292,7 +4292,7 @@ work trans{*(conn->_sqlConnection)};
 				trans.transaction->quote(parameters), savedEncodingPriority, trans.transaction->quote(toString(EncodingStatus::ToBeProcessed))
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -4496,7 +4496,7 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob(
 					trans.transaction->quote(parameters), savedEncodingPriority, trans.transaction->quote(toString(EncodingStatus::ToBeProcessed))
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				trans.transaction->exec0(sqlStatement);
+				trans.transaction->exec(sqlStatement).no_rows();
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 				SQLQUERYLOG(
 					"default", elapsed,
@@ -4620,7 +4620,7 @@ void MMSEngineDBFacade::addEncoding_LiveProxyJob(
 					trans.transaction->quote(parameters), savedEncodingPriority, trans.transaction->quote(toString(EncodingStatus::ToBeProcessed))
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				trans.transaction->exec0(sqlStatement);
+				trans.transaction->exec(sqlStatement).no_rows();
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 				SQLQUERYLOG(
 					"default", elapsed,
@@ -4739,7 +4739,7 @@ void MMSEngineDBFacade::addEncoding_VODProxyJob(
 					trans.transaction->quote(parameters), savedEncodingPriority, trans.transaction->quote(toString(EncodingStatus::ToBeProcessed))
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				trans.transaction->exec0(sqlStatement);
+				trans.transaction->exec(sqlStatement).no_rows();
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 				SQLQUERYLOG(
 					"default", elapsed,
@@ -4851,7 +4851,7 @@ void MMSEngineDBFacade::addEncoding_CountdownJob(
 					trans.transaction->quote(parameters), savedEncodingPriority, trans.transaction->quote(toString(EncodingStatus::ToBeProcessed))
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				trans.transaction->exec0(sqlStatement);
+				trans.transaction->exec(sqlStatement).no_rows();
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 				SQLQUERYLOG(
 					"default", elapsed,
@@ -4966,7 +4966,7 @@ work trans{*(conn->_sqlConnection)};
 					trans.transaction->quote(parameters), savedEncodingPriority, trans.transaction->quote(toString(EncodingStatus::ToBeProcessed))
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				trans.transaction->exec0(sqlStatement);
+				trans.transaction->exec(sqlStatement).no_rows();
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 				SQLQUERYLOG(
 					"default", elapsed,
@@ -5113,7 +5113,7 @@ void MMSEngineDBFacade::addEncoding_VideoSpeed(
 				trans.transaction->quote(parameters), savedEncodingPriority, trans.transaction->quote(toString(EncodingStatus::ToBeProcessed))
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -5229,7 +5229,7 @@ void MMSEngineDBFacade::addEncoding_AddSilentAudio(
 				trans.transaction->quote(parameters), savedEncodingPriority, trans.transaction->quote(toString(EncodingStatus::ToBeProcessed))
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -5400,7 +5400,7 @@ void MMSEngineDBFacade::addEncoding_PictureInPictureJob(
 				trans.transaction->quote(parameters), savedEncodingPriority, trans.transaction->quote(toString(EncodingStatus::ToBeProcessed))
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -5588,7 +5588,7 @@ void MMSEngineDBFacade::addEncoding_IntroOutroOverlayJob(
 				trans.transaction->quote(parameters), savedEncodingPriority, trans.transaction->quote(toString(EncodingStatus::ToBeProcessed))
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -5744,7 +5744,7 @@ void MMSEngineDBFacade::addEncoding_CutFrameAccurate(
 				trans.transaction->quote(parameters), savedEncodingPriority, trans.transaction->quote(toString(EncodingStatus::ToBeProcessed))
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,

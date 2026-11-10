@@ -30,7 +30,7 @@ int64_t MMSEngineDBFacade::addRTMPChannelConf(
 				trans.transaction->quote(type)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			confKey = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			confKey = trans.transaction->exec(sqlStatement).one_row()[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -90,7 +90,7 @@ void MMSEngineDBFacade::modifyRTMPChannelConf(
 				trans.transaction->quote(type), confKey, workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -258,7 +258,7 @@ json MMSEngineDBFacade::getRTMPChannelConfList(
 			string sqlStatement = std::format("select count(*) from MMS_Conf_RTMPChannel rc {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			field = "numFound";
-			responseRoot[field] = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			responseRoot[field] = trans.transaction->exec(sqlStatement).one_row()[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -612,7 +612,7 @@ MMSEngineDBFacade::reserveRTMPChannel(int64_t workspaceKey, string label, int ou
 						ingestionJobKeyList
 					);
 					chrono::system_clock::time_point startSql = chrono::system_clock::now();
-					trans.transaction->exec0(sqlStatement);
+					trans.transaction->exec(sqlStatement).no_rows();
 					long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 					SQLQUERYLOG(
 						"default", elapsed,
@@ -927,7 +927,7 @@ int64_t MMSEngineDBFacade::addSRTChannelConf(
 				playURL == "" ? "null" : trans.transaction->quote(playURL), trans.transaction->quote(type)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			confKey = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			confKey = trans.transaction->exec(sqlStatement).one_row()[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -983,7 +983,7 @@ void MMSEngineDBFacade::modifySRTChannelConf(
 				playURL == "" ? "null" : trans.transaction->quote(playURL), trans.transaction->quote(type), confKey, workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1151,7 +1151,7 @@ json MMSEngineDBFacade::getSRTChannelConfList(
 			string sqlStatement = std::format("select count(*) from MMS_Conf_SRTChannel rc {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			field = "numFound";
-			responseRoot[field] = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			responseRoot[field] = trans.transaction->exec(sqlStatement).one_row()[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1520,7 +1520,7 @@ MMSEngineDBFacade::reserveSRTChannel(int64_t workspaceKey, string label, int out
 						ingestionJobKeyList
 					);
 					chrono::system_clock::time_point startSql = chrono::system_clock::now();
-					trans.transaction->exec0(sqlStatement);
+					trans.transaction->exec(sqlStatement).no_rows();
 					long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 					SQLQUERYLOG(
 						"default", elapsed,
@@ -1840,7 +1840,7 @@ int64_t MMSEngineDBFacade::addHLSChannelConf(
 				trans.transaction->quote(type)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			confKey = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			confKey = trans.transaction->exec(sqlStatement).one_row()[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1907,7 +1907,7 @@ void MMSEngineDBFacade::modifyHLSChannelConf(
 				playlistEntriesNumber == -1 ? "null" : to_string(playlistEntriesNumber), trans.transaction->quote(type), confKey, workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2087,7 +2087,7 @@ json MMSEngineDBFacade::getHLSChannelConfList(
 			string sqlStatement = std::format("select count(*) from MMS_Conf_HLSChannel hc {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			field = "numFound";
-			responseRoot[field] = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			responseRoot[field] = trans.transaction->exec(sqlStatement).one_row()[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2384,7 +2384,7 @@ MMSEngineDBFacade::reserveHLSChannel(int64_t workspaceKey, string label, int out
 						ingestionJobKeyList
 					);
 					chrono::system_clock::time_point startSql = chrono::system_clock::now();
-					trans.transaction->exec0(sqlStatement);
+					trans.transaction->exec(sqlStatement).no_rows();
 					long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 					SQLQUERYLOG(
 						"default", elapsed,

@@ -121,7 +121,7 @@ int64_t MMSEngineDBFacade::addUpdateWorkflowAsLibrary(
 					trans.transaction->quote(jsonWorkflow), workflowLibraryKey
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				trans.transaction->exec0(sqlStatement);
+				trans.transaction->exec(sqlStatement).no_rows();
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 				SQLQUERYLOG(
 					"default", elapsed,
@@ -144,7 +144,7 @@ int64_t MMSEngineDBFacade::addUpdateWorkflowAsLibrary(
 					thumbnailMediaItemKey == -1 ? "null" : to_string(thumbnailMediaItemKey), trans.transaction->quote(jsonWorkflow)
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				workflowLibraryKey = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+				workflowLibraryKey = trans.transaction->exec(sqlStatement).one_row()[0].as<int64_t>();
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 				SQLQUERYLOG(
 					"default", elapsed,
@@ -310,7 +310,7 @@ json MMSEngineDBFacade::getWorkflowsAsLibraryList(int64_t workspaceKey)
 			string sqlStatement = std::format("select count(*) from MMS_WorkflowLibrary {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			field = "numFound";
-			responseRoot[field] = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			responseRoot[field] = trans.transaction->exec(sqlStatement).one_row()[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,

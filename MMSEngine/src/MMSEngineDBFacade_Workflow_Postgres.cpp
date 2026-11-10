@@ -112,7 +112,7 @@ int64_t MMSEngineDBFacade::addWorkflow(
 				trans.transaction->quote(metaDataContent), trans.transaction->quote(toString(MMSEngineDBFacade::IngestionRootStatus::NotCompleted))
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			ingestionRootKey = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			ingestionRootKey = trans.transaction->exec(sqlStatement).one_row()[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -433,7 +433,7 @@ json MMSEngineDBFacade::getIngestionRootsStatus(
 		{
 			string sqlStatement = std::format("select count(*) from MMS_IngestionRoot {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			responseRoot["numFound"] = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			responseRoot["numFound"] = trans.transaction->exec(sqlStatement).one_row()[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,

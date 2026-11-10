@@ -34,7 +34,7 @@ json MMSEngineDBFacade::addYouTubeConf(int64_t workspaceKey, string label, strin
 				trans.transaction->quote(accessToken)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			confKey = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			confKey = trans.transaction->exec(sqlStatement).one_row()[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -163,7 +163,7 @@ json MMSEngineDBFacade::modifyYouTubeConf(
 				setSQL, confKey, workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -398,7 +398,7 @@ json MMSEngineDBFacade::getYouTubeConfList(int64_t workspaceKey, string label)
 			string sqlStatement = std::format("select count(*) from MMS_Conf_YouTube {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			field = "numFound";
-			responseRoot[field] = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			responseRoot[field] = trans.transaction->exec(sqlStatement).one_row()[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -609,7 +609,7 @@ int64_t MMSEngineDBFacade::addFacebookConf(int64_t workspaceKey, string label, s
 				workspaceKey, trans.transaction->quote(label), trans.transaction->quote(userAccessToken)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			confKey = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			confKey = trans.transaction->exec(sqlStatement).one_row()[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -673,7 +673,7 @@ void MMSEngineDBFacade::modifyFacebookConf(int64_t confKey, int64_t workspaceKey
 				trans.transaction->quote(label), trans.transaction->quote(userAccessToken), confKey, workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -856,7 +856,7 @@ json MMSEngineDBFacade::getFacebookConfList(int64_t workspaceKey, int64_t confKe
 			string sqlStatement = std::format("select count(*) from MMS_Conf_Facebook {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			field = "numFound";
-			responseRoot[field] = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			responseRoot[field] = trans.transaction->exec(sqlStatement).one_row()[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1051,7 +1051,7 @@ int64_t MMSEngineDBFacade::addTwitchConf(int64_t workspaceKey, string label, str
 				workspaceKey, trans.transaction->quote(label), trans.transaction->quote(refreshToken)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			confKey = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			confKey = trans.transaction->exec(sqlStatement).one_row()[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1115,7 +1115,7 @@ void MMSEngineDBFacade::modifyTwitchConf(int64_t confKey, int64_t workspaceKey, 
 				trans.transaction->quote(label), trans.transaction->quote(refreshToken), confKey, workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1298,7 +1298,7 @@ json MMSEngineDBFacade::getTwitchConfList(int64_t workspaceKey, int64_t confKey,
 			string sqlStatement = std::format("select count(*) from MMS_Conf_Twitch {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			field = "numFound";
-			responseRoot[field] = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			responseRoot[field] = trans.transaction->exec(sqlStatement).one_row()[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1493,7 +1493,7 @@ int64_t MMSEngineDBFacade::addTiktokConf(int64_t workspaceKey, string label, str
 				workspaceKey, trans.transaction->quote(label), trans.transaction->quote(token)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			confKey = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			confKey = trans.transaction->exec(sqlStatement).one_row()[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1557,7 +1557,7 @@ void MMSEngineDBFacade::modifyTiktokConf(int64_t confKey, int64_t workspaceKey, 
 				trans.transaction->quote(label), trans.transaction->quote(token), confKey, workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1740,7 +1740,7 @@ json MMSEngineDBFacade::getTiktokConfList(int64_t workspaceKey, int64_t confKey,
 			string sqlStatement = std::format("select count(*) from MMS_Conf_Tiktok {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			field = "numFound";
-			responseRoot[field] = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			responseRoot[field] = trans.transaction->exec(sqlStatement).one_row()[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,

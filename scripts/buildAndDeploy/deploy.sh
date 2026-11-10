@@ -230,12 +230,32 @@ packageDir=$3
 previousVersionsToKeep=$4
 versioned=$5
 
+# lo stdin di questa shell è lo script stesso (bash -s): i comandi non devono leggerlo, quindi < /dev/null
+stopAll()
+{
+	~/mmsStopALL.sh < /dev/null
+}
+
+# i servizi avviati ereditano stdout/stderr: se fossero quelli della sessione ssh, ssh non terminerebbe finchè
+# i servizi sono attivi (ed i loro messaggi, es. un crash, finirebbero nell'output del deploy).
+# L'output di mmsStartALL.sh viene quindi scritto in un file e poi mostrato
+startAll()
+{
+	local startLog=~/mmsStartALL.log
+	local startStatus=0
+
+	~/mmsStartALL.sh < /dev/null > "$startLog" 2>&1 || startStatus=$?
+	cat "$startLog"
+
+	return $startStatus
+}
+
 if [ $versioned -eq 0 ]
 then
 	echo ""
 	echo "------------------------------------------------------------------------------------------------------------------------------------------"
 	echo "mmsStopALL.sh"
-	~/mmsStopALL.sh
+	#stopAll
 
 	echo ""
 	echo "------------------------------------------------------------------------------------------------------------------------------------------"
@@ -250,7 +270,7 @@ then
 	echo ""
 	echo "------------------------------------------------------------------------------------------------------------------------------------------"
 	echo "mmsStartALL.sh"
-	~/mmsStartALL.sh
+	#startAll
 
 	exit 0
 fi
@@ -266,7 +286,7 @@ fi
 echo ""
 echo "------------------------------------------------------------------------------------------------------------------------------------------"
 echo "mmsStopALL.sh"
-~/mmsStopALL.sh
+#stopAll
 
 echo ""
 echo "------------------------------------------------------------------------------------------------------------------------------------------"
@@ -276,7 +296,7 @@ ln -sfn "$packageDir" "$remoteDir/$package"
 echo ""
 echo "------------------------------------------------------------------------------------------------------------------------------------------"
 echo "mmsStartALL.sh"
-~/mmsStartALL.sh
+#startAll
 
 # vengono mantenute le ultime $previousVersionsToKeep versioni precedenti (ordinate per numero di versione).
 # -type d esclude i link (es. /opt/mms/MMS) e i vecchi pacchetti MMS-<version>.tar.gz

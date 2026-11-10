@@ -45,7 +45,7 @@ int64_t MMSEngineDBFacade::addEncodingProfilesSetIfNotAlreadyPresent(
 						encodingProfilesSetKey
 					);
 					chrono::system_clock::time_point startSql = chrono::system_clock::now();
-					trans.transaction->exec0(sqlStatement);
+					trans.transaction->exec(sqlStatement).no_rows();
 					long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 					SQLQUERYLOG(
 						"default", elapsed,
@@ -65,7 +65,7 @@ int64_t MMSEngineDBFacade::addEncodingProfilesSetIfNotAlreadyPresent(
 					workspaceKey, trans.transaction->quote(toString(contentType)), trans.transaction->quote(label)
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				encodingProfilesSetKey = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+				encodingProfilesSetKey = trans.transaction->exec(sqlStatement).one_row()[0].as<int64_t>();
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 				SQLQUERYLOG(
 					"default", elapsed,
@@ -228,7 +228,7 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
 					trans.transaction->quote(toString(deliveryTechnology)), trans.transaction->quote(jsonProfile)
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				encodingProfileKey = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+				encodingProfileKey = trans.transaction->exec(sqlStatement).one_row()[0].as<int64_t>();
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 				SQLQUERYLOG(
 					"default", elapsed,
@@ -306,7 +306,7 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
 							encodingProfilesSetKey, encodingProfileKey
 						);
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
-						trans.transaction->exec0(sqlStatement);
+						trans.transaction->exec(sqlStatement).no_rows();
 						long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 						SQLQUERYLOG(
 							"default", elapsed,
@@ -531,7 +531,7 @@ int64_t MMSEngineDBFacade::addEncodingProfileIntoSetIfNotAlreadyPresent(
 							encodingProfilesSetKey, encodingProfileKey
 						);
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
-						trans.transaction->exec0(sqlStatement);
+						trans.transaction->exec(sqlStatement).no_rows();
 						long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 						SQLQUERYLOG(
 							"default", elapsed,
@@ -709,7 +709,7 @@ json MMSEngineDBFacade::getEncodingProfilesSetList(
 			string sqlStatement = std::format("select count(*) from MMS_EncodingProfilesSet {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			field = "numFound";
-			responseRoot[field] = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			responseRoot[field] = trans.transaction->exec(sqlStatement).one_row()[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -918,7 +918,7 @@ json MMSEngineDBFacade::getEncodingProfileList(
 			string sqlStatement = std::format("select count(*) from MMS_EncodingProfile {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			field = "numFound";
-			responseRoot[field] = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			responseRoot[field] = trans.transaction->exec(sqlStatement).one_row()[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,

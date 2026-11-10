@@ -38,7 +38,7 @@ MMSEngineDBFacade::addFTPConf(int64_t workspaceKey, string label, string server,
 				trans.transaction->quote(password), trans.transaction->quote(remoteDirectory)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			confKey = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			confKey = trans.transaction->exec(sqlStatement).one_row()[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -105,7 +105,7 @@ void MMSEngineDBFacade::modifyFTPConf(
 				trans.transaction->quote(password), trans.transaction->quote(remoteDirectory), confKey, workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -272,7 +272,7 @@ json MMSEngineDBFacade::getFTPConfList(int64_t workspaceKey)
 			string sqlStatement = std::format("select count(*) from MMS_Conf_FTP {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			field = "numFound";
-			responseRoot[field] = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			responseRoot[field] = trans.transaction->exec(sqlStatement).one_row()[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -480,7 +480,7 @@ int64_t MMSEngineDBFacade::addEMailConf(int64_t workspaceKey, string label, stri
 				trans.transaction->quote(message)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			confKey = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			confKey = trans.transaction->exec(sqlStatement).one_row()[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -545,7 +545,7 @@ void MMSEngineDBFacade::modifyEMailConf(int64_t confKey, int64_t workspaceKey, s
 				trans.transaction->quote(message), confKey, workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
+			trans.transaction->exec(sqlStatement).no_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -712,7 +712,7 @@ json MMSEngineDBFacade::getEMailConfList(int64_t workspaceKey)
 			string sqlStatement = std::format("select count(*) from MMS_Conf_EMail {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			field = "numFound";
-			responseRoot[field] = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			responseRoot[field] = trans.transaction->exec(sqlStatement).one_row()[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,

@@ -7,7 +7,7 @@
 set -e
 
 #version=8.0.2
-version=7.9.2
+version=7.10.7
 name=libpqxx
 
 workDir=$(mktemp -d)
