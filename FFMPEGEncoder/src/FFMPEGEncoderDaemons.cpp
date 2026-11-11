@@ -1377,8 +1377,10 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 				{
 					try
 					{
+						// il pop va fatto sul source: copiedLiveProxy ha un clone di _callbackData, per cui il pop sul clone
+						// lascerebbe l'evento nel source e il workflow verrebbe inviato ad ogni giro del monitor
 						if (const auto blackDetectEvent
-							= copiedLiveProxy->_callbackData->popFilterEvent("blackdetect"))
+							= sourceLiveProxy->_callbackData->popFilterEvent("blackdetect"))
 						{
 							LOG_WARN(
 								"liveProxyMonitor. Black detected"
