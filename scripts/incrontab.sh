@@ -273,7 +273,7 @@ rsyncByRSYNCD()
 #we synchronize when .m3u8 is changed (IN_MOVED_TO)
 #Caso (2). Nel caso invece in cui siamo nello scenario in cui un externalDelivery riceve i files dall'encoder (tramite rsync) e deve replicarli
 #su un altro storage, in questo caso è sufficiente che il file .m3u8 sia cambiato
-if [[ "$eventName" == "IN_MOVED_TO" || "$fileName" == *.m3u8 ]]
+if [[ "$fileName" == *.m3u8 ]]
 then
 	#Per evitare che lo script venga eseguito piu volte per la stessa directory
 	# Lock file specifico per la directory
