@@ -79,7 +79,7 @@ mms-account-creation()
 	#usermod -L testuser
 }
 
-time-zone()
+time-zone-24-04()
 {
 	read -n 1 -s -r -p "set time zone..."
 	echo ""
@@ -121,6 +121,35 @@ time-zone()
 	#Java does (or did?) things differently: it reads /etc/timezone, which contains a timezone name, which should be the path to a file relative
 	#to /usr/share/zoneinfo. I'm not aware of any other program that uses /etc/timezone, and I don't know why Sun chose to do things differently
 	#from the rest of the world.
+	echo "Europe/Rome" > /etc/timezone
+}
+
+#ubuntu 26.04
+time-zone()
+{
+	# Set timezone
+	timedatectl set-timezone Europe/Rome
+
+	# Disable NTP synchronization temporarily
+	timedatectl set-ntp no
+
+	# Stop and disable systemd-timesyncd (if installed)
+	systemctl disable --now systemd-timesyncd 2>/dev/null || true
+
+	# Install chrony
+	apt-get update
+	apt-get -y install chrony
+
+	# Stop chrony
+	systemctl stop chrony
+
+	# Force immediate synchronization with NTP servers
+	chronyd -q
+
+	# Start and enable chrony
+	systemctl enable --now chrony
+
+	# Set timezone configuration
 	echo "Europe/Rome" > /etc/timezone
 }
 
@@ -1041,8 +1070,8 @@ install-mms-packages()
 {
 	moduleType=$1
 
-	#architecture=ubuntu-22.04
-	architecture=ubuntu-24.04
+	#architecture=ubuntu-24.04
+	architecture=ubuntu-26.04
 
 	read -n 1 -s -r -p "install-mms-packages..."
 	echo ""
@@ -1352,12 +1381,21 @@ install-mms-aws-sdk-cpp-package()
 	moduleType=$2
 
 	packageName=aws-sdk-cpp
-	package=$packageName
-	read -n 1 -s -r -p "Downloading $package..."
+
+	if [ "$architecture" == "ubuntu-24.04" ]; then
+		echo "execute the command: ./scripts/buildAndDeploy/deploy.sh $packageName <server> 24.04"
+	else
+		echo "execute the command: ./scripts/buildAndDeploy/deploy.sh $packageName <server> 26.04"
+	fi
 	echo ""
-	echo "Downloading $package..."
-	curl -o ${MMSOPT}/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
-	tar xvfz ${MMSOPT}/$package.tar.gz -C ${MMSOPT}
+	read -n 1 -s -r -p "premi un tasto dopo che il comando precedente è terminato"
+
+	#package=$packageName
+	#read -n 1 -s -r -p "Downloading $package..."
+	#echo ""
+	#echo "Downloading $package..."
+	#curl -o ${MMSOPT}/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
+	#tar xvfz ${MMSOPT}/$package.tar.gz -C ${MMSOPT}
 
 	if [ "$moduleType" == "externalEncoder" ]; then
 		echo ""
@@ -1404,10 +1442,19 @@ install-mms-opencv-package()
 	architecture=$1
 
 	package=opencv
-	read -n 1 -s -r -p "Downloading $package..."
+
+	if [ "$architecture" == "ubuntu-24.04" ]; then
+		echo "execute the command: ./scripts/buildAndDeploy/deploy.sh $packageName <server> 24.04"
+	else
+		echo "execute the command: ./scripts/buildAndDeploy/deploy.sh $packageName <server> 26.04"
+	fi
 	echo ""
-	curl -o ${MMSOPT}/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
-	tar xvfz ${MMSOPT}/$package.tar.gz -C ${MMSOPT}
+	read -n 1 -s -r -p "premi un tasto dopo che il comando precedente è terminato"
+
+	#read -n 1 -s -r -p "Downloading $package..."
+	#echo ""
+	#curl -o ${MMSOPT}/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
+	#tar xvfz ${MMSOPT}/$package.tar.gz -C ${MMSOPT}
 }
 
 install-mms-tomcat-package()
@@ -1587,18 +1634,27 @@ install-mms-nginx-package()
 	systemctl disable nginx
 
 	packageName=nginx
-	echo ""
-	nginxVersion=1.27.2
-	echo -n "$packageName version (i.e.: $nginxVersion)? "
-	read version
-	if [ "$version" == "" ]; then
-		version=$nginxVersion
+
+	if [ "$architecture" == "ubuntu-24.04" ]; then
+		echo "execute the command: ./scripts/buildAndDeploy/deploy.sh $packageName <server> 24.04"
+	else
+		echo "execute the command: ./scripts/buildAndDeploy/deploy.sh $packageName <server> 26.04"
 	fi
-	package=$packageName-$version
-	echo "Downloading $package..."
-	curl -o ${MMSOPT}/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
-	tar xvfz ${MMSOPT}/$package.tar.gz -C ${MMSOPT}
-	ln -rs ${MMSOPT}/$package ${MMSOPT}/$packageName
+	echo ""
+	read -n 1 -s -r -p "premi un tasto dopo che il comando precedente è terminato"
+
+	#echo ""
+	#nginxVersion=1.27.2
+	#echo -n "$packageName version (i.e.: $nginxVersion)? "
+	#read version
+	#if [ "$version" == "" ]; then
+	#	version=$nginxVersion
+	#fi
+	#package=$packageName-$version
+	#echo "Downloading $package..."
+	#curl -o ${MMSOPT}/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
+	#tar xvfz ${MMSOPT}/$package.tar.gz -C ${MMSOPT}
+	#ln -rs ${MMSOPT}/$package ${MMSOPT}/$packageName
 
 	#nginx configuration
 	rm -rf ${MMSOPT}/nginx/logs
@@ -1779,18 +1835,27 @@ install-mms-libpqxx-package()
 	architecture=$1
 
 	packageName=libpqxx
-	echo ""
-	libpqxxVersion=7.9.2
-	echo -n "$packageName version (i.e.: $libpqxxVersion)? "
-	read version
-	if [ "$version" == "" ]; then
-		version=$libpqxxVersion
+
+	if [ "$architecture" == "ubuntu-24.04" ]; then
+		echo "execute the command: ./scripts/buildAndDeploy/deploy.sh $packageName <server> 24.04"
+	else
+		echo "execute the command: ./scripts/buildAndDeploy/deploy.sh $packageName <server> 26.04"
 	fi
-	package=$packageName-$version
-	echo "Downloading $package..."
-	curl -o ${MMSOPT}/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
-	tar xvfz ${MMSOPT}/$package.tar.gz -C ${MMSOPT}
-	ln -rs ${MMSOPT}/$package ${MMSOPT}/$packageName
+	echo ""
+	read -n 1 -s -r -p "premi un tasto dopo che il comando precedente è terminato"
+
+	#echo ""
+	#libpqxxVersion=7.9.2
+	#echo -n "$packageName version (i.e.: $libpqxxVersion)? "
+	#read version
+	#if [ "$version" == "" ]; then
+	#	version=$libpqxxVersion
+	#fi
+	#package=$packageName-$version
+	#echo "Downloading $package..."
+	#curl -o ${MMSOPT}/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
+	#tar xvfz ${MMSOPT}/$package.tar.gz -C ${MMSOPT}
+	#ln -rs ${MMSOPT}/$package ${MMSOPT}/$packageName
 }
 
 install-mms-MMS-package()
@@ -1798,18 +1863,27 @@ install-mms-MMS-package()
 	architecture=$1
 
 	packageName=MMS
-	echo ""
-	mmsVersion=1.0.7147
-	echo -n "$packageName version (i.e.: $mmsVersion)? "
-	read version
-	if [ "$version" == "" ]; then
-		version=$mmsVersion
+
+	if [ "$architecture" == "ubuntu-24.04" ]; then
+		echo "execute the command: ./scripts/buildAndDeploy/deploy.sh $packageName <server> 24.04"
+	else
+		echo "execute the command: ./scripts/buildAndDeploy/deploy.sh $packageName <server> 26.04"
 	fi
-	package=$packageName-$version
-	echo "Downloading $package..."
-	curl -o ${MMSOPT}/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
-	tar xvfz ${MMSOPT}/$package.tar.gz -C ${MMSOPT}
-	ln -rs ${MMSOPT}/$packageName-$version ${MMSOPT}/MMS
+	echo ""
+	read -n 1 -s -r -p "premi un tasto dopo che il comando precedente è terminato"
+
+	#echo ""
+	#mmsVersion=1.0.7147
+	#echo -n "$packageName version (i.e.: $mmsVersion)? "
+	#read version
+	#if [ "$version" == "" ]; then
+	#	version=$mmsVersion
+	#fi
+	#package=$packageName-$version
+	#echo "Downloading $package..."
+	#curl -o ${MMSOPT}/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
+	#tar xvfz ${MMSOPT}/$package.tar.gz -C ${MMSOPT}
+	#ln -rs ${MMSOPT}/$packageName-$version ${MMSOPT}/MMS
 }
 
 install-mms-ImageMagick-package()
@@ -1817,18 +1891,27 @@ install-mms-ImageMagick-package()
 	architecture=$1
 
 	packageName=ImageMagick
-	echo ""
-	imageMagickVersion=7.1.1
-	echo -n "$packageName version (i.e.: $imageMagickVersion)? "
-	read version
-	if [ "$version" == "" ]; then
-		version=$imageMagickVersion
+
+	if [ "$architecture" == "ubuntu-24.04" ]; then
+		echo "execute the command: ./scripts/buildAndDeploy/deploy.sh $packageName <server> 24.04"
+	else
+		echo "execute the command: ./scripts/buildAndDeploy/deploy.sh $packageName <server> 26.04"
 	fi
-	package=$packageName-$version
-	echo "Downloading $package..."
-	curl -o ${MMSOPT}/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
-	tar xvfz ${MMSOPT}/$package.tar.gz -C ${MMSOPT}
-	ln -rs ${MMSOPT}/$package ${MMSOPT}/$packageName
+	echo ""
+	read -n 1 -s -r -p "premi un tasto dopo che il comando precedente è terminato"
+
+	#echo ""
+	#imageMagickVersion=7.1.1
+	#echo -n "$packageName version (i.e.: $imageMagickVersion)? "
+	#read version
+	#if [ "$version" == "" ]; then
+	#	version=$imageMagickVersion
+	#fi
+	#package=$packageName-$version
+	#echo "Downloading $package..."
+	#curl -o ${MMSOPT}/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
+	#tar xvfz ${MMSOPT}/$package.tar.gz -C ${MMSOPT}
+	#ln -rs ${MMSOPT}/$package ${MMSOPT}/$packageName
 }
 
 install-mms-FFMpeg-package()
@@ -1836,18 +1919,27 @@ install-mms-FFMpeg-package()
 	architecture=$1
 
 	packageName=ffmpeg
-	echo ""
-	ffmpegVersion=8.1
-	echo -n "$packageName version (i.e.: $ffmpegVersion)? "
-	read version
-	if [ "$version" == "" ]; then
-		version=$ffmpegVersion
+
+	if [ "$architecture" == "ubuntu-24.04" ]; then
+		echo "execute the command: ./scripts/buildAndDeploy/deploy.sh $packageName <server> 24.04"
+	else
+		echo "execute the command: ./scripts/buildAndDeploy/deploy.sh $packageName <server> 26.04"
 	fi
-	package=$packageName-$version
-	echo "Downloading $package..."
-	curl -o ${MMSOPT}/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
-	tar xvfz ${MMSOPT}/$package.tar.gz -C ${MMSOPT}
-	ln -rs ${MMSOPT}/$package ${MMSOPT}/$packageName
+	echo ""
+	read -n 1 -s -r -p "premi un tasto dopo che il comando precedente è terminato"
+
+	#echo ""
+	#ffmpegVersion=8.1
+	#echo -n "$packageName version (i.e.: $ffmpegVersion)? "
+	#read version
+	#if [ "$version" == "" ]; then
+	#	version=$ffmpegVersion
+	#fi
+	#package=$packageName-$version
+	#echo "Downloading $package..."
+	#curl -o ${MMSOPT}/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
+	#tar xvfz ${MMSOPT}/$package.tar.gz -C ${MMSOPT}
+	#ln -rs ${MMSOPT}/$package ${MMSOPT}/$packageName
 }
 
 firewall-rules()

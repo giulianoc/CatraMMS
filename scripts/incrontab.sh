@@ -180,11 +180,51 @@ rsyncBySSH()
 	fi
 }
 
+#sincronizza un singolo server tramite rsyncd: prima i .ts (tsSource), poi il .m3u8 (m3u8Source)
+#Usa le variabili esportate da rsyncByRSYNCD perchè viene eseguita anche come processo figlio di parallel (export -f)
+syncServerByRSYNCD()
+{
+	local server=$1
+
+	local verboseOptions=""
+	if [ "$debug_rsync" -eq 1 ]
+	then
+		verboseOptions="--progress --verbose"
+		echo "@$(date)-$pid ($server)@: @$fileName@ @INFO@ Inizio sincronizzazione...$rsyncDest" >> $debugFileName
+	fi
+
+	#Il parametro --timeout di rsync indica il tempo massimo (in secondi) di inattività sulla connessione di rete
+	#	(se per più di SECONDS secondi non passa alcun dato sulla connessione), non la durata totale del comando
+	# 1. Sincronizza solo i file .ts
+	timeout $timeoutRsyncCommand rsync $verboseOptions \
+		--archive --omit-dir-times --mkpath --timeout=15 \
+		--include "*/" --include "*.ts" --exclude "*" \
+		"$tsSource" "rsync://$server/mmsdata$rsyncDest"
+	local status_ts=$?
+	#24 (some files vanished before they could be transferred): i .ts vengono presi dalla directory live
+	#	e alcuni possono essere cancellati durante il trasferimento (es. dal find di pulizia), non è un errore
+	if [[ $status_ts -eq 0 || $status_ts -eq 24 ]]; then
+		# 2. Sincronizza solo il file .m3u8
+		timeout $timeoutRsyncCommand rsync $verboseOptions \
+			--archive --omit-dir-times --mkpath --timeout=15 \
+			--include "*/" --include "*.m3u8" --exclude "*" \
+			"$m3u8Source" "rsync://$server/mmsdata$rsyncDest"
+		local status_m3u8=$?
+		if [[ $status_m3u8 -ne 0 ]]; then
+			#La string "RSYNC ERROR ($fileName)" viene usato in servicesStatusLibrary.sh per il suo monitoring
+			echo "@$sDate-$pid ($server)@: @ERROR@ @$fileName@ rsync failed (m3u8) exited with status_m3u8: @$status_m3u8@ (124: timeout)" >> $debugFileName
+		fi
+	else
+		echo "@$sDate-$pid ($server)@: @ERROR@ @$fileName@ rsync failed (ts) exited with status_ts: @$status_ts@ (124: timeout)" >> $debugFileName
+	fi
+}
+
 rsyncByRSYNCD()
 {
-	local rsyncSource=$1
-	local rsyncDest=$2
-	local serversToBeSynched=$3
+	local tsSource=$1
+	local m3u8Source=$2
+	local rsyncDest=$3
+	local serversToBeSynched=$4
 
 	MAX_PARALLEL=5				# Max sincronizzazioni in parallelo
 	timeoutRsyncCommand=25s
@@ -200,66 +240,22 @@ rsyncByRSYNCD()
 
 	#e' impoetante questo formato perchè viene usato da servicesStatusLibrary.sh (mms_incrontab_check_rsync)
 	sDate=$(date +'%Y-%m-%d %H:%M:%S')
-	if [ $debug_rsync -eq 1 ]
+
+	#Le variabili esportate vengono ereditate dai processi figli dello script (parallel, bash, rsync)
+	export timeoutRsyncCommand tsSource m3u8Source rsyncDest debugFileName pid fileName sDate debug_rsync
+	export -f syncServerByRSYNCD
+
+	local servers
+	read -ra servers <<< "$serversToBeSynched"
+	if [[ ${#servers[@]} -eq 1 ]]
 	then
-		#Le variabili esportate vengono ereditate dai processi figli dello script (parallel, rsync)
-		export timeoutRsyncCommand rsyncSource rsyncDest debugFileName pid fileName sDate
-		parallel --env timeoutRsyncCommand --env rsyncSource --env rsyncDest --env debugFileName --env pid --env fileName --env sDate --jobs "$MAX_PARALLEL" --bar --halt now,fail=1 \
-		'{
-			echo "@$(date)-$pid ({})@: @$fileName@ @INFO@ Inizio sincronizzazione...$rsyncDest" >> $debugFileName
-			#Il parametro --timeout di rsync indica il tempo massimo (in secondi) di inattività sulla connessione di rete
-			#	(se per più di SECONDS secondi non passa alcun dato sulla connessione), non la durata totale del comando
-			# 1. Sincronizza solo i file .ts
-			timeout $timeoutRsyncCommand rsync \
-				--archive --progress --verbose --omit-dir-times --mkpath --timeout=15 \
-    				--include "*/" --include "*.ts" --exclude "*" \
-    				"$rsyncSource" "rsync://{}/mmsdata$rsyncDest"
-			status_ts=$?
-			if [[ $status_ts -eq 0 ]]; then
-				# 2. Sincronizza solo il file .m3u8
-				timeout $timeoutRsyncCommand rsync \
-					--archive --progress --verbose --omit-dir-times --mkpath --timeout=15 \
-			  		--include "*/" --include "*.m3u8" --exclude "*" \
-    					"$rsyncSource" "rsync://{}/mmsdata$rsyncDest"
-				status_m3u8=$?
-				if [[ $status_m3u8 -ne 0 ]]; then
-					#La string "RSYNC ERROR ($fileName)" viene usato in servicesStatusLibrary.sh per il suo monitoring
-					echo "@$sDate-$pid ({})@: @ERROR@ @$fileName@ rsync failed (m3u8) exited with status_m3u8: @$status_m3u8@ (124: timeout)" >> $debugFileName
-				fi
-			else
-				echo "@$sDate-$pid ({})@: @ERROR@ @$fileName@ rsync failed (ts) exited with status_ts: @$status_ts@ (124: timeout)" >> $debugFileName
-			fi
-		} >> $debugFileName 2>&1' \
-		::: $serversToBeSynched
+		#un solo server: evitiamo parallel (script perl, avvio costoso ad ogni evento)
+		syncServerByRSYNCD "${servers[0]}" >> $debugFileName 2>&1
 	else
-		#Le variabili esportate vengono ereditate dai processi figli dello script (parallel, rsync)
-		export timeoutRsyncCommand rsyncSource rsyncDest debugFileName pid fileName sDate
-		parallel --env timeoutRsyncCommand --env rsyncSource --env rsyncDest --env debugFileName --env pid --env fileName --env sDate --jobs "$MAX_PARALLEL" --bar --halt now,fail=1 \
-		'{
-			#Il parametro --timeout di rsync indica il tempo massimo (in secondi) di inattività sulla connessione di rete
-			#	(se per più di SECONDS secondi non passa alcun dato sulla connessione), non la durata totale del comando
-			# 1. Sincronizza solo i file .ts
-			timeout $timeoutRsyncCommand rsync \
-				--archive --omit-dir-times --mkpath --timeout=15 \
-    				--include "*/" --include "*.ts" --exclude "*" \
-				"$rsyncSource" "rsync://{}/mmsdata$rsyncDest"
-			status_ts=$?
-			if [[ $status_ts -eq 0 ]]; then
-				# 2. Sincronizza solo il file .m3u8
-				timeout $timeoutRsyncCommand rsync \
-					--archive --omit-dir-times --mkpath --timeout=15 \
-				  	--include "*/" --include "*.m3u8" --exclude "*" \
-					"$rsyncSource" "rsync://{}/mmsdata$rsyncDest"
-				status_m3u8=$?
-				if [[ $status_m3u8 -ne 0 ]]; then
-					#La string "RSYNC ERROR ($fileName)" viene usato in servicesStatusLibrary.sh per il suo monitoring
-					echo "@$sDate-$pid ({})@: @ERROR@ @$fileName@ rsync failed (m3u8) exited with status_m3u8: @$status_m3u8@ (124: timeout)" >> $debugFileName
-				fi
-			else
-				echo "@$sDate-$pid ({})@: @ERROR@ @$fileName@ rsync failed (ts) exited with status_ts: @$status_ts@ (124: timeout)" >> $debugFileName
-			fi
-		} >> $debugFileName 2>&1' \
-		::: $serversToBeSynched
+		#-q: parallel non deve reinterpretare il comando, altrimenti la stringa di bash -c verrebbe spezzata
+		parallel -q --jobs "$MAX_PARALLEL" --bar --halt now,fail=1 \
+			bash -c 'syncServerByRSYNCD "$1" >> "$debugFileName" 2>&1' _ {} \
+			::: "${servers[@]}"
 	fi
 }
 
@@ -272,7 +268,8 @@ rsyncByRSYNCD()
 #IN_CREATE per i files .m3u8.tmp e .ts
 #we synchronize when .m3u8 is changed (IN_MOVED_TO)
 #Caso (2). Nel caso invece in cui siamo nello scenario in cui un externalDelivery riceve i files dall'encoder (tramite rsync) e deve replicarli
-#su un altro storage, in questo caso è sufficiente che il file .m3u8 sia cambiato
+#su un altro storage, in questo caso è sufficiente che il file .m3u8 sia cambiato (IN_MOVED_TO: rsync scrive un temporaneo e poi fa rename).
+#	Gli IN_MOVED_TO dei .ts non devono avviare la sincronizzazione, altrimenti avremmo una sincronizzazione per ogni .ts ricevuto
 if [[ "$fileName" == *.m3u8 ]]
 then
 	#Per evitare che lo script venga eseguito piu volte per la stessa directory
@@ -308,13 +305,25 @@ then
 
 
 	#invece di sincronizzare una directory che cambia in continuazione, congeliamo la directory prima di sincronizzarla
+	snapshotDirectory=$channelDirectory.$channelDirectoryMd5sum
 	startCopy=$(date +%s%3N)
-	#cp -r $channelDirectory $channelDirectory.$channelDirectoryMd5sum
-	#rsync -a per preservare timestamp, permessi, ownership, ... per evitare che i file siano “modificati” e li risincronizza anche se il contenuto è identico
-	#--ignore-missing-args perchè durante la sincronizzazione alcuni file presenti all’inizio nel sorgente sono scomparsi (cancellati o sovrascritti) prima che rsync riuscisse a copiarli
-	# 	Questo è normale nello streaming live
-	rsync -a --ignore-missing-args $channelDirectory/ $channelDirectory.$channelDirectoryMd5sum/
-	status_copy=$?
+	if [[ -n "${serversToBeSynchedByRsyncOnSsh:-}" ]]; then
+		#Caso (1) encoder: ffmpeg scrive i .ts direttamente nella directory, congeliamo tutta la directory
+		#cp -r $channelDirectory $channelDirectory.$channelDirectoryMd5sum
+		#rsync -a per preservare timestamp, permessi, ownership, ... per evitare che i file siano “modificati” e li risincronizza anche se il contenuto è identico
+		#--ignore-missing-args perchè durante la sincronizzazione alcuni file presenti all’inizio nel sorgente sono scomparsi (cancellati o sovrascritti) prima che rsync riuscisse a copiarli
+		# 	Questo è normale nello streaming live
+		rsync -a --ignore-missing-args $channelDirectory/ $snapshotDirectory/
+		status_copy=$?
+	else
+		#Caso (2) externalDelivery: i .ts arrivano già completi (rsync scrive un temporaneo e poi fa rename) e prima del .m3u8
+		#	che li referenzia, per cui congeliamo solo il .m3u8. Copiare tutta la directory significherebbe copiare ad ogni evento
+		#	tutti i .ts presenti (fino alla pulizia del find), con un carico di I/O enorme quando i canali sono tanti.
+		#	Il .m3u8 va congelato perchè, se ne arrivasse uno nuovo tra il passo dei .ts e quello del .m3u8, il server destinazione
+		#	riceverebbe un .m3u8 che referenzia un .ts non ancora trasferito (404 per i client)
+		mkdir -p $snapshotDirectory && cp -p $channelDirectory/*.m3u8 $snapshotDirectory/
+		status_copy=$?
+	fi
 	endCopy=$(date +%s%3N)
 	if [[ $status_copy -ne 0 ]]; then
 		end=$(date +%s%3N)
@@ -349,13 +358,15 @@ then
 		echo "rsync start (daemon): $serversToBeSynched" >> $debugFileName
 
 		#in questo caso sincronizziamo i contenuti delle due directory e non le directory stesse, per cui serve / alla fine
-                rsyncSource=$channelDirectory.$channelDirectoryMd5sum/
+		#i .ts vengono presi dalla directory live, il .m3u8 dallo snapshot (vedi sopra)
+		tsSource=$channelDirectory/
+		m3u8Source=$snapshotDirectory/
 		#channelDirectory è qualcosa tipo /var/mms/storage/MMSRepository/MMSLive/6/5297
 		#Poiche in /etc/rsyncd.conf, path è /mnt/mmsStorage-1/MMSLive, rsyncDest deve essere del tipo /6/5297
 		#Il comando sotto dice: Rimuove dall’inizio della stringa channelDirectory tutto ciò che viene prima (e incluso) */MMSLive
-                rsyncDest="${channelDirectory#*/MMSLive}"
+		rsyncDest="${channelDirectory#*/MMSLive}"
 
-                rsyncByRSYNCD "$rsyncSource" "$rsyncDest" "$serversToBeSynched"
+		rsyncByRSYNCD "$tsSource" "$m3u8Source" "$rsyncDest" "$serversToBeSynched"
 	fi
 	rm -rf $channelDirectory.$channelDirectoryMd5sum
 

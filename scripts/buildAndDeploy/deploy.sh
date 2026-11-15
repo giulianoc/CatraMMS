@@ -20,7 +20,7 @@ set -e
 
 if [ $# -lt 2 -o $# -gt 3 ]
 then
-	echo "$(date): usage $0 <package, i.e.: ffmpeg | ImageMagick | libpqxx | MMS | aws-sdk-cpp | opencv> <server> [<ubuntu version, i.e.: 24.04 | 26.04>]"
+	echo "$(date): usage $0 <package, i.e.: ffmpeg | ImageMagick | libpqxx | nginx | MMS | aws-sdk-cpp | opencv> <server> [<ubuntu version, i.e.: 24.04 | 26.04>]"
 
 	exit 1
 fi
@@ -48,6 +48,10 @@ case "$package" in
 		;;
 	opencv)
 		imageDir=/deploy/opencv
+		;;
+	nginx)
+		# deps/nginx.sh compila nginx con --prefix=/opt/mms/nginx (il prefix è il path usato sul server, non $DEPLOY_DIR)
+		imageDir=/opt/mms/nginx
 		;;
 	*)
 		echo "$(date): package not supported: $package"
@@ -161,6 +165,33 @@ containerId=$(docker create --platform "$platform" "$imageName")
 trap 'docker rm "$containerId" > /dev/null' EXIT
 echo "$(date): extracting $imageDir from $imageName"
 docker cp "$containerId:$imageDir" "$extractDir"
+
+# nginx già installato: /opt/mms/nginx sul server contiene anche la configurazione (link a MMS/conf/nginx.conf,
+# sites-enabled, snippets, certificati), il link logs e le directory temporanee (vedi installServer.sh),
+# per cui viene sostituito solo l'eseguibile (il precedente viene mantenuto in sbin/nginx.old).
+# Prima installazione (installServer.sh): viene copiata tutta la directory (logica generale sotto)
+if [ "$package" == "nginx" ] && ssh "$server" test -x "$remoteDir/nginx/sbin/nginx"
+then
+	echo "$(date): copying nginx executable to $server:$remoteDir/nginx/sbin/nginx.new"
+	rsync -a "$extractDir/sbin/nginx" "$server:$remoteDir/nginx/sbin/nginx.new"
+
+	echo "$(date): installing nginx executable on $server"
+	ssh "$server" bash -s -- "$remoteDir" << 'EOF'
+set -e
+
+sbinDir=$1/nginx/sbin
+
+# verifica che il nuovo eseguibile parta (es. librerie mancanti) prima di sostituire quello attuale
+"$sbinDir/nginx.new" -V
+
+cp -p "$sbinDir/nginx" "$sbinDir/nginx.old"
+mv "$sbinDir/nginx.new" "$sbinDir/nginx"
+EOF
+
+	echo "$(date): deploy of nginx on $server completed, restart nginx to use the new executable (previous one in $remoteDir/nginx/sbin/nginx.old)"
+
+	exit 0
+fi
 
 # versioned: 1 se il pacchetto viene installato in /opt/mms/<package>-<version> con il link /opt/mms/<package>
 versioned=1
