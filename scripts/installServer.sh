@@ -1389,6 +1389,7 @@ install-mms-aws-sdk-cpp-package()
 	fi
 	echo ""
 	read -n 1 -s -r -p "premi un tasto dopo che il comando precedente è terminato"
+	echo ""
 
 	#package=$packageName
 	#read -n 1 -s -r -p "Downloading $package..."
@@ -1444,12 +1445,13 @@ install-mms-opencv-package()
 	package=opencv
 
 	if [ "$architecture" == "ubuntu-24.04" ]; then
-		echo "execute the command: ./scripts/buildAndDeploy/deploy.sh $packageName <server> 24.04"
+		echo "execute the command: ./scripts/buildAndDeploy/deploy.sh $package <server> 24.04"
 	else
-		echo "execute the command: ./scripts/buildAndDeploy/deploy.sh $packageName <server> 26.04"
+		echo "execute the command: ./scripts/buildAndDeploy/deploy.sh $package <server> 26.04"
 	fi
 	echo ""
 	read -n 1 -s -r -p "premi un tasto dopo che il comando precedente è terminato"
+	echo ""
 
 	#read -n 1 -s -r -p "Downloading $package..."
 	#echo ""
@@ -1642,6 +1644,7 @@ install-mms-nginx-package()
 	fi
 	echo ""
 	read -n 1 -s -r -p "premi un tasto dopo che il comando precedente è terminato"
+	echo ""
 
 	#echo ""
 	#nginxVersion=1.27.2
@@ -1843,6 +1846,7 @@ install-mms-libpqxx-package()
 	fi
 	echo ""
 	read -n 1 -s -r -p "premi un tasto dopo che il comando precedente è terminato"
+	echo ""
 
 	#echo ""
 	#libpqxxVersion=7.9.2
@@ -1871,6 +1875,7 @@ install-mms-MMS-package()
 	fi
 	echo ""
 	read -n 1 -s -r -p "premi un tasto dopo che il comando precedente è terminato"
+	echo ""
 
 	#echo ""
 	#mmsVersion=1.0.7147
@@ -1899,6 +1904,7 @@ install-mms-ImageMagick-package()
 	fi
 	echo ""
 	read -n 1 -s -r -p "premi un tasto dopo che il comando precedente è terminato"
+	echo ""
 
 	#echo ""
 	#imageMagickVersion=7.1.1
@@ -1927,6 +1933,7 @@ install-mms-FFMpeg-package()
 	fi
 	echo ""
 	read -n 1 -s -r -p "premi un tasto dopo che il comando precedente è terminato"
+	echo ""
 
 	#echo ""
 	#ffmpegVersion=8.1
