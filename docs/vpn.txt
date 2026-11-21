@@ -1,0 +1,60 @@
+
+#VPN server:
+sudo su -
+apt update
+apt install squid
+apt install apache2-utils
+
+systemctl status squid
+
+
+#Per creare user/pwd:
+htpasswd -c /etc/squid/passwd lswkjhA
+#chiederà di mettere la pwd: kdewjhRhj
+
+chown proxy:proxy /etc/squid/passwd
+chmod 640 /etc/squid/passwd
+
+
+
+vi /etc/squid/conf.d/my.conf
+# Definizione del programma di autenticazione
+auth_param basic program /usr/lib/squid/basic_ncsa_auth /etc/squid/passwd
+auth_param basic children 10
+auth_param basic realm Proxy Squid - Autenticazione richiesta
+auth_param basic credentialsttl 2 hours
+auth_param basic casesensitive on
+# ACL per utenti autenticati
+acl authenticated_users proxy_auth REQUIRED
+# Consenti l'accesso solo agli utenti autenticati
+http_access allow authenticated_users
+
+acl ffmpeg_server src 1.2.3.4/32
+acl ffmpeg_server src 5.6.7.8/32
+http_access allow ffmpeg_server
+http_access deny all
+
+
+
+ufw allow from 1.2.3.4 to any port 3128 proto tcp
+ufw allow from 5.6.7.8 to any port 3128 proto tcp
+
+#verifica la conf
+squid -k parse
+
+systemctl restart squid
+
+#Per verificare user/pwd manualmente
+sudo -u proxy /usr/lib/squid/basic_ncsa_auth /etc/squid/passwd
+Poi digita manualmente, sulla stessa riga, username password e premi invio:
+<user> <pwd>
+Risposte possibili:
+OK → le credenziali sono corrette, il problema è altrove (permessi, ACL, ecc.)
+ERR → password/utente sbagliati o problema di lettura del file
+
+
+Per verificare che il server squid stia funzionando correttamente:
+curl -x http://utente:password@<ip-server-squid>:3128 -I http://www.google.com
+Verificare che ritorni un 200 OK
+
+

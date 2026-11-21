@@ -18,16 +18,16 @@
 
 set -e
 
-if [ $# -lt 2 -o $# -gt 3 ]
+if [ $# -ne 3 ]
 then
-	echo "$(date): usage $0 <package, i.e.: ffmpeg | ImageMagick | libpqxx | nginx | MMS | aws-sdk-cpp | opencv> <server> [<ubuntu version, i.e.: 24.04 | 26.04>]"
+	echo "$(date): usage $0 <package, i.e.: ffmpeg | ImageMagick | libpqxx | nginx | MMS | aws-sdk-cpp | opencv> <server> <ubuntu version, i.e.: 24.04 | 26.04>"
 
 	exit 1
 fi
 
 package=$1
 server=$2
-ubuntuVersion=${3:-24.04}
+ubuntuVersion=$3
 
 # directory del pacchetto all'interno dell'immagine
 case "$package" in

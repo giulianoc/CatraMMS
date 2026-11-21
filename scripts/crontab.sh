@@ -42,8 +42,8 @@ retentionOnFileByBlocks()
 {
 	options="$1"
 
-	maxDurationInSeconds=50
-	removeBlockSize=500
+	maxDurationInSeconds=300
+	removeBlockSize=100000
 
 	echo "" >> $debugFilename
   echo "$(date +'%Y/%m/%d %H:%M:%S'): received retentionOnFileByBlocks ($options), maxDurationInSeconds: $maxDurationInSeconds, removeBlockSize: $removeBlockSize" >> $debugFilename
@@ -151,7 +151,7 @@ else
 	then
 		if [ "$timeoutInMinutes" == "" ]
 		then
-			timeoutInMinutes=$threeDaysInMinutes
+			timeoutInMinutes=$oneDayInMinutes
 		fi
 
 		#in ffmpegEndlessRecursivePlaylist troviamo i files (source + playlist) trasmessi come VODProxy
